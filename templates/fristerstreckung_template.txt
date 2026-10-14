@@ -1,0 +1,109 @@
+================================================================================
+GERMAN VERSION (Für Deutschsprachige Kantone: ZH, BE, LU, ZG, SG, AG, BS, SO etc.)
+================================================================================
+
+Gesuch um Fristerstreckung zur Einreichung der Steuererklärung {TAX_YEAR}
+
+Absender:
+{TAXPAYER_NAME}
+{TAXPAYER_STREET}
+{TAXPAYER_PLZ_CITY}
+AHV-Nr. / PID: {AHV_NUMBER}
+Steuer-ID / Register-Nr.: {TAX_ID}
+
+An:
+Kantonales Steueramt / Steuerverwaltung des Kantons {CANTON}
+Dienststelle Steuern
+{TAX_OFFICE_ADDRESS}
+
+Ort, Datum: {CITY}, {CURRENT_DATE}
+
+Sehr geehrte Damen und Herren
+
+Hiermit ersuche ich höflich um eine Fristerstreckung für die Einreichung der Steuererklärung {TAX_YEAR} (inklusive aller erforderlichen Beilagen und des Wertschriftenverzeichnisses) für die oben genannte steuerpflichtige Person.
+
+Bisherige Frist:         {CURRENT_DEADLINE}
+Neu beantragte Frist:    {REQUESTED_NEW_DEADLINE}
+
+Begründung:
+Aufgrund von noch ausstehenden Jahresbescheinigungen und Belegen (insbesondere Lohnausweise, Vorsorgebescheinigungen Säule 3a sowie ausstehende Abrechnungen) ist eine sorgfältige und vollständige Deklaration bis zum ordentlichen Termin leider nicht möglich.
+
+Ich danke Ihnen für die wohlwollende Prüfung meines Gesuchs und die Bestätigung der Fristerstreckung.
+
+Mit freundlichen Grüssen
+
+_____________________________
+(Unterschrift / Signature)
+{TAXPAYER_NAME}
+
+
+================================================================================
+FRENCH VERSION (Pour les cantons francophones: VD, GE, NE, FR, JU, VS)
+================================================================================
+
+Demande de prolongation du délai de dépôt de la déclaration d'impôt {TAX_YEAR}
+
+Expéditeur:
+{TAXPAYER_NAME}
+{TAXPAYER_STREET}
+{TAXPAYER_PLZ_CITY}
+N° AVS: {AHV_NUMBER}
+N° de contribuable / Dossier: {TAX_ID}
+
+À:
+Administration cantonale des impôts du Canton de {CANTON}
+{TAX_OFFICE_ADDRESS}
+
+Lieu et date: {CITY}, le {CURRENT_DATE}
+
+Madame, Monsieur,
+
+Par la présente, je sollicite respectueusement une prolongation du délai pour le dépôt de ma déclaration d'impôt pour la période fiscale {TAX_YEAR}.
+
+Délai ordinaire initial:  {CURRENT_DEADLINE}
+Nouveau délai sollicité:  {REQUESTED_NEW_DEADLINE}
+
+Motif:
+En raison de l'attente de certaines attestations fiscales indispensables (certificats de salaire, attestations 3e pilier et justificatifs bancaires), il ne m'est pas possible de finaliser mon dossier de manière complète avant l'échéance initiale.
+
+En vous remerciant par avance de l'attention bienveillante que vous porterez à ma requête, je vous prie d'agréer, Madame, Monsieur, mes salutations distinguées.
+
+_____________________________
+(Signature)
+{TAXPAYER_NAME}
+
+
+================================================================================
+ITALIAN VERSION (Per il Cantone Ticino: TI, Grigioni italiano)
+================================================================================
+
+Istanza di proroga del termine per l'inoltro della dichiarazione fiscale {TAX_YEAR}
+
+Mittente:
+{TAXPAYER_NAME}
+{TAXPAYER_STREET}
+{TAXPAYER_PLZ_CITY}
+No. AVS: {AHV_NUMBER}
+No. Contribuente: {TAX_ID}
+
+A:
+Divisione delle contribuzioni del Cantone {CANTON}
+{TAX_OFFICE_ADDRESS}
+
+Luogo, data: {CITY}, {CURRENT_DATE}
+
+Egregi Signori,
+
+con la presente mi permetto di richiedere cortesemente una proroga del termine per l'inoltro della dichiarazione d'imposta {TAX_YEAR}.
+
+Termine attuale:          {CURRENT_DEADLINE}
+Nuovo termine richiesto:  {REQUESTED_NEW_DEADLINE}
+
+Motivazione:
+A causa dell'attesa di giustificativi indispensabili (certificati di salario, attestazioni bancarie e terzo pilastro 3a non ancora pervenuti), non è possibile completare la dichiarazione entro il termine ordinario.
+
+Ringraziando anticipatamente per la disponibilità, porgo cordiali saluti.
+
+_____________________________
+(Firma)
+{TAXPAYER_NAME}
