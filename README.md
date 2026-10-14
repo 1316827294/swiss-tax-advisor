@@ -26,29 +26,133 @@ An **open-source, sovereign, and deterministic Agent Skill** for Swiss personal 
 
 ## 🚀 Installation
 
-### Option A — One-line install (recommended)
+> **For AI agents**: You can ask your AI assistant to install this skill by saying:
+> *"Install the swiss-tax-advisor skill from https://github.com/1316827294/swiss-tax-advisor for [your platform]"*
+> The AI can run the one-line command below on your behalf.
+
+Pick your platform:
+
+### 🟣 Antigravity (AGY) — Global install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/1316827294/swiss-tax-advisor/main/install.sh | bash
 ```
 
-This copies the skill into `~/.gemini/config/skills/swiss-tax-advisor/`, which is automatically discovered by the Antigravity agent.
+Installs to `~/.gemini/config/skills/swiss-tax-advisor/`. Restart AGY — the skill appears automatically.
 
-### Option B — Manual install
+---
+
+### 🟠 Claude Code — Project install
+
+Run this **inside your project directory**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/1316827294/swiss-tax-advisor/main/install.sh | bash -s -- --platform claude
+```
+
+Copies `CLAUDE.md` to your project root + `swiss-tax-advisor/scripts/` and `references/`. Claude Code reads `CLAUDE.md` automatically from the project root.
+
+---
+
+### 🔵 Cursor — Project install
+
+Run this **inside your project directory**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/1316827294/swiss-tax-advisor/main/install.sh | bash -s -- --platform cursor
+```
+
+Copies `.cursor/rules/swiss-tax-advisor.mdc` + scripts. Cursor reads `.cursor/rules/` automatically.
+
+---
+
+### 🟢 Cline (VSCode) — Project install
+
+Run this **inside your project directory**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/1316827294/swiss-tax-advisor/main/install.sh | bash -s -- --platform cline
+```
+
+Copies `.clinerules` to your project root + scripts. Cline reads `.clinerules` automatically.
+
+---
+
+### 🩵 Windsurf (Codeium) — Project install
+
+Run this **inside your project directory**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/1316827294/swiss-tax-advisor/main/install.sh | bash -s -- --platform windsurf
+```
+
+Copies `.windsurfrules` to your project root + scripts. Windsurf reads `.windsurfrules` automatically.
+
+---
+
+### ⚫ GitHub Copilot — Project install
+
+Run this **inside your project directory**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/1316827294/swiss-tax-advisor/main/install.sh | bash -s -- --platform copilot
+```
+
+Copies `.github/copilot-instructions.md` + scripts. Copilot Workspace reads it automatically.
+> ⚠️ GitHub Copilot Chat cannot execute terminal commands — use it for guidance, then run scripts manually.
+
+---
+
+### 🟡 Aider — Project install
+
+Run this **inside your project directory**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/1316827294/swiss-tax-advisor/main/install.sh | bash -s -- --platform aider
+```
+
+Then run aider with: `aider --conventions CONVENTIONS.md`
+
+---
+
+### 🔴 Devin — Project install
+
+Run this **inside your project directory**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/1316827294/swiss-tax-advisor/main/install.sh | bash -s -- --platform devin
+```
+
+Copies `DEVIN.md` + scripts. Devin reads `DEVIN.md` from the project root.
+
+---
+
+### Install for ALL platforms at once
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/1316827294/swiss-tax-advisor/main/install.sh | bash -s -- --platform all
+```
+
+---
+
+### Manual install (any platform)
 
 ```bash
 git clone https://github.com/1316827294/swiss-tax-advisor.git
-cp -r swiss-tax-advisor ~/.gemini/config/skills/swiss-tax-advisor
 ```
 
-### Option C — Project-specific install (share with your team via git)
+Then copy the relevant file(s) manually:
 
-```bash
-mkdir -p .agents/skills
-git clone https://github.com/1316827294/swiss-tax-advisor.git .agents/skills/swiss-tax-advisor
-```
-
-> After installation, restart the Antigravity session. The skill will be listed under available skills.
+| Platform | File to copy | Destination |
+|---|---|---|
+| Antigravity | entire repo | `~/.gemini/config/skills/swiss-tax-advisor/` |
+| Claude Code | `CLAUDE.md` + `scripts/` + `references/` | project root |
+| Cursor | `.cursor/rules/swiss-tax-advisor.mdc` + `scripts/` | project root |
+| Cline | `.clinerules` + `scripts/` | project root |
+| Windsurf | `.windsurfrules` + `scripts/` | project root |
+| Copilot | `.github/copilot-instructions.md` + `scripts/` | project root |
+| Aider | `CONVENTIONS.md` + `scripts/` | project root |
+| Devin | `DEVIN.md` + `scripts/` | project root |
 
 ---
 
