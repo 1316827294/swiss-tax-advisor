@@ -1,0 +1,55 @@
+---
+description: Swiss Tax Advisor — deterministic cantonal tax calculations for all 26 Swiss cantons. Activate for any Swiss tax filing, deduction, audit risk, or Quellensteuer question.
+globs:
+alwaysApply: false
+---
+
+# Swiss Tax Advisor — Cursor Rules
+
+## 🛑 HARD-GATE: No Mental Math
+
+Swiss taxes require non-linear cantonal progressive tariffs and 5-Rappen rounding. **ALWAYS run the Python scripts in `scripts/` for any numeric calculation.** Never estimate tax rates.
+
+## Script Invocations
+
+```bash
+# Main tax engine
+python3 scripts/swiss_tax_math.py \
+  --gross-income {GROSS} --canton {CANTON} --commune "{COMMUNE}" \
+  --civil-status {SINGLE|MARRIED} --children {N} \
+  --deductions '{"s4": 7258, "s1": 3300}' --json
+
+# Marginal rate
+python3 scripts/marginal_rate_calc.py \
+  --income {GROSS} --canton {CANTON} --status {STATUS} \
+  --deduction {AMT} --category PILLAR_3A --json
+
+# Marriage penalty
+python3 scripts/family_marriage_sim.py \
+  --earner-a {A} --earner-b {B} --canton {CANTON} --children {N} --json
+
+# Audit risk
+python3 scripts/audit_risk_evaluator.py \
+  --income {NET} --education {S7} --commute {S1} --json
+
+# NOV / franchise / relocation
+python3 scripts/advanced_advisory.py nov --income {GROSS} --canton {CANTON} --deductions '{"s4": 7258}'
+python3 scripts/advanced_advisory.py franchise --spend {MEDICAL}
+python3 scripts/advanced_advisory.py relocation --income {GROSS} --from-canton {FROM} --to-canton {TO}
+```
+
+## Privacy
+- Mask AHV: `756.xxxx.xxxx.xx`
+- Mask IBAN: `CHxx **** **** **** xxxx x`
+
+## Workflow
+1. **Ingest** — Parse Lohnausweis + bank statements → deduction codes (see `references/`)
+2. **Calculate** — Run scripts, quote output verbatim
+3. **Deliver** — Steuerdossier + eTax guide + tax-saving report + Fristerstreckung (use `templates/`)
+
+## Language
+Respond in the user's language. Official letters in canton's official language (DE/FR/IT).
+
+## References
+See `references/` for deduction taxonomy, canton caps, audit criteria, and glossary.
+All 26 cantons supported. Tax year: 2025/2026.
