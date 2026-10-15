@@ -1,0 +1,46 @@
+{
+  "_note": "This is an EXAMPLE ONLY. The AI will create your real profile.json automatically during onboarding.",
+  "_version": "1.0",
+  "_created": "2025-10-15",
+  "_updated": "2025-10-15",
+
+  "personal": {
+    "name": "Max Mustermann",
+    "birth_year": 1985,
+    "ahv_masked": "756.xxxx.xxxx.xx",
+    "permit_type": "C",
+    "language": "DE"
+  },
+
+  "address": {
+    "canton": "BE",
+    "commune": "Bern",
+    "zip": "3000"
+  },
+
+  "civil_status": {
+    "status": "SINGLE",
+    "partner_income_chf": null,
+    "children_count": 0,
+    "children_ages": []
+  },
+
+  "employment": {
+    "type": "EMPLOYED",
+    "employer": "ACME AG",
+    "has_second_job": false
+  },
+
+  "recurring": {
+    "commute_type": "GA",
+    "commute_km_one_way": null,
+    "lunch_type": "CANTEEN",
+    "health_franchise_chf": 2500,
+    "church_member": false,
+    "pillar_3a_institution": "UBS",
+    "pillar_3a_max_auto": true
+  },
+
+  "onboarding_complete": true,
+  "onboarding_missing_fields": []
+}

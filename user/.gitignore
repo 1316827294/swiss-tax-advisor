@@ -1,0 +1,8 @@
+# Protect all user data — never commit to git
+*.json
+reports/
+
+# But keep the directory structure and reference files
+!.gitignore
+!README.md
+!profile.example.json
