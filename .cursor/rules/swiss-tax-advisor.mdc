@@ -15,13 +15,18 @@ Act like a polite, conversational local tax app. The user should only see friend
 
 ## 🔄 Session Start Protocol
 At the beginning of each session:
-```bash
-python3 scripts/user_profile.py next-question
-```
-- If `status == "IN_PROGRESS"`: Ask the user the question provided in `prompts[language]`. Append progress bar (`progress_bar` `progress_percent%`). Save their answer via `python3 scripts/user_profile.py set profile/tax ...`.
-- If `status == "READY_TO_CALCULATE"`: Silently execute calculation scripts and present results.
+1. `python3 scripts/parse_documents.py scan` (Auto-ingest ./documents/ if any files placed)
+2. `python3 scripts/user_profile.py next-question`
+- If `status == "IN_PROGRESS"`: Ask the user the question with live progress & tax badge.
+- If `status == "READY_TO_CALCULATE"`: Silently execute calculation scripts and generate eTax guide.
 
 ## Script Invocations (Internal Only)
+```bash
+# Document scanner
+python3 scripts/parse_documents.py scan
+
+# eTax Guide generator
+python3 scripts/etax_guide_generator.py generate 2025
 ```bash
 # Main tax engine
 python3 scripts/swiss_tax_math.py --gross-income {GROSS} --canton {CANTON} --commune "{COMMUNE}" --civil-status {SINGLE|MARRIED} --children {N} --deductions '{...}' --json

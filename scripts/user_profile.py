@@ -22,6 +22,12 @@ import argparse
 from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
 
+# Import tax engine for live dashboard
+try:
+    import swiss_tax_math
+except ImportError:
+    swiss_tax_math = None
+
 # ── Dynamic Project Root Resolution ───────────────────────────────────────────
 def find_project_root() -> str:
     cur = os.path.dirname(os.path.abspath(__file__))
@@ -347,6 +353,65 @@ def make_progress_bar(percent: int) -> str:
     filled = int(percent / 10)
     return "[" + "■" * filled + "□" * (total_blocks - filled) + "]"
 
+def compute_live_tax_metrics(profile: Dict, tax: Dict, year: int) -> Optional[Dict[str, Any]]:
+    if not swiss_tax_math:
+        return None
+    gross = _get_nested(tax, "income.gross_chf")
+    canton = _get_nested(profile, "address.canton") or "BE"
+    if not gross or gross <= 0:
+        return None
+
+    commune = _get_nested(profile, "address.commune") or "Default"
+    status = _get_nested(profile, "civil_status.status") or "SINGLE"
+    children = _get_nested(profile, "civil_status.children_count") or 0
+    church = "ROMAN_CATHOLIC" if _get_nested(profile, "religion.church_tax_liable") else "NONE"
+
+    deductions = {}
+    s1 = _get_nested(tax, "deductions.s1_commute_chf")
+    if s1: deductions["s1"] = s1
+    s2 = _get_nested(tax, "deductions.s2_meals_chf")
+    if s2: deductions["s2"] = s2
+    s4 = _get_nested(tax, "deductions.s4_pillar3a_chf")
+    if s4: deductions["s4"] = s4
+
+    try:
+        cur_res = swiss_tax_math.calculate_swiss_tax(
+            gross_income_chf=gross,
+            canton=canton,
+            commune=commune,
+            civil_status=status,
+            children_count=children,
+            church_tax=church,
+            deductions=deductions
+        )
+        cur_tax = cur_res.get("total_tax_chf", 0.0)
+
+        # Potential savings if 3a is maxed out
+        deductions_max_3a = dict(deductions)
+        deductions_max_3a["s4"] = 7258.0
+        max_3a_res = swiss_tax_math.calculate_swiss_tax(
+            gross_income_chf=gross,
+            canton=canton,
+            commune=commune,
+            civil_status=status,
+            children_count=children,
+            church_tax=church,
+            deductions=deductions_max_3a
+        )
+        max_3a_tax = max_3a_res.get("total_tax_chf", 0.0)
+        savings = max(0.0, cur_tax - max_3a_tax)
+
+        return {
+            "has_estimate": True,
+            "canton": canton,
+            "estimated_total_tax_chf": cur_tax,
+            "effective_tax_rate_pct": round((cur_tax / gross) * 100, 1),
+            "pillar_3a_potential_savings_chf": savings,
+            "dashboard_badge": f"💰 当前预估总税负: CHF {cur_tax:,.0f} | 3a填满预计立省: CHF {savings:,.0f}"
+        }
+    except Exception:
+        return None
+
 # ── Commands ───────────────────────────────────────────────────────────────────
 def cmd_status(year: Optional[int] = None) -> Dict:
     _ensure_user_dir()
@@ -361,6 +426,8 @@ def cmd_status(year: Optional[int] = None) -> Dict:
         next_item = pending[0]
         next_action = f"ASK_QUESTION — field: {next_item['field']}"
 
+    live_metrics = compute_live_tax_metrics(profile, tax, y)
+
     return {
         "status": "READY_TO_CALCULATE" if not pending else "NEEDS_INFO",
         "tax_year": y,
@@ -370,6 +437,7 @@ def cmd_status(year: Optional[int] = None) -> Dict:
         "total_questions": len(QUESTION_PIPELINE),
         "next_field": pending[0]["field"] if pending else None,
         "next_action": next_action,
+        "live_tax_dashboard": live_metrics,
         "profile_summary": {
             "canton": _get_nested(profile, "address.canton"),
             "commune": _get_nested(profile, "address.commune"),
@@ -387,16 +455,21 @@ def cmd_next_question(year: Optional[int] = None) -> Dict:
     _ensure_user_dir()
     y = year or date.today().year
     completed, pending, pct = get_onboarding_pipeline_state(y)
+    profile = _load_json(PROFILE_PATH, default_profile)
+    tax = _load_json(tax_data_path(y), lambda: default_tax_data(y))
+    live_metrics = compute_live_tax_metrics(profile, tax, y)
 
     if not pending:
         return {
             "status": "READY_TO_CALCULATE",
             "progress_percent": 100,
             "progress_bar": make_progress_bar(100),
+            "live_tax_dashboard": live_metrics,
             "message": "All required tax information is collected. You can now execute calculation scripts."
         }
 
     q = pending[0]
+    badge = live_metrics.get("dashboard_badge", "") if live_metrics else ""
     return {
         "status": "IN_PROGRESS",
         "step_index": len(completed) + 1,
@@ -413,8 +486,10 @@ def cmd_next_question(year: Optional[int] = None) -> Dict:
             "de": q["prompt_de"]
         },
         "options": q["options"],
+        "live_tax_dashboard": live_metrics,
         "agent_instructions": (
-            f"Ask the user this question conversationally. Attach the progress bar {make_progress_bar(pct)} {pct}%. "
+            f"Ask the user this question conversationally. Attach progress bar: {make_progress_bar(pct)} {pct}%. "
+            f"{('Attach live badge: ' + badge + '. ') if badge else ''}"
             f"Do not mention code or script names. Save the answer with: "
             f"python3 scripts/user_profile.py set {'profile' if q['category'] in ('profile', 'tax_helper') else 'tax ' + str(y)} '<json>'"
         )
@@ -423,6 +498,11 @@ def cmd_next_question(year: Optional[int] = None) -> Dict:
 def cmd_set(resource: str, patch: Dict, year: Optional[int] = None) -> Dict:
     _ensure_user_dir()
     y = year or date.today().year
+
+    # Record pre-update metrics for hot-edit comparison
+    old_prof = _load_json(PROFILE_PATH, default_profile)
+    old_tax = _load_json(tax_data_path(y), lambda: default_tax_data(y))
+    old_metrics = compute_live_tax_metrics(old_prof, old_tax, y)
 
     # Intelligent heuristics for user friendly inputs
     if resource == "profile":
@@ -487,12 +567,32 @@ def cmd_set(resource: str, patch: Dict, year: Optional[int] = None) -> Dict:
         _save_json(path, data)
 
     _, pending, pct = get_onboarding_pipeline_state(y)
+    new_prof = _load_json(PROFILE_PATH, default_profile)
+    new_tax = _load_json(tax_data_path(y), lambda: default_tax_data(y))
+    new_metrics = compute_live_tax_metrics(new_prof, new_tax, y)
+
+    hot_edit_delta = None
+    hot_edit_summary = None
+    if old_metrics and new_metrics and old_metrics.get("estimated_total_tax_chf") and new_metrics.get("estimated_total_tax_chf"):
+        old_val = old_metrics["estimated_total_tax_chf"]
+        new_val = new_metrics["estimated_total_tax_chf"]
+        diff = old_val - new_val
+        if abs(diff) > 0.05:
+            hot_edit_delta = round(diff, 2)
+            if diff > 0:
+                hot_edit_summary = f"🎉 调整生效：预估总税负从 CHF {old_val:,.0f} 降至 CHF {new_val:,.0f}，本次调整成功为您省下 CHF {diff:,.0f} 税金！"
+            else:
+                hot_edit_summary = f"📊 调整生效：预估总税负从 CHF {old_val:,.0f} 调整至 CHF {new_val:,.0f} (差额 +CHF {-diff:,.0f})。"
+
     return {
         "status": "saved",
         "progress_percent": pct,
         "progress_bar": make_progress_bar(pct),
         "is_ready_to_calculate": len(pending) == 0,
-        "next_field": pending[0]["field"] if pending else None
+        "next_field": pending[0]["field"] if pending else None,
+        "live_tax_dashboard": new_metrics,
+        "hot_edit_delta": hot_edit_delta,
+        "hot_edit_summary": hot_edit_summary
     }
 
 def cmd_get(resource: str, year: Optional[int] = None) -> Dict:

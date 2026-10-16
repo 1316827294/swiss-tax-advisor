@@ -16,12 +16,14 @@ An **open-source, sovereign, and deterministic AI Agent Skill** for Swiss person
 | Capability | Details |
 |---|---|
 | 🧮 **Deterministic Tax Engine** | Federal IFD/DBG + cantonal + communal + wealth tax across all 26 cantons, 5-Rappen precision |
-| 📄 **Document Parsing** | Lohnausweis (boxes 1–15), bank statements (CAMT.053), receipts → deduction codes S1–S23 |
+| 📁 **Document Auto-Ingestion** | Drop Lohnausweis (boxes 1–15), Pillar 3a, or bank statements into `./documents/` for instant auto-filling |
+| 💰 **Live Tax Dashboard & Hot-Edit** | Real-time tax countdown badge; instantly displays exact CHF savings when amounts are updated |
 | 🛡️ **Audit Risk Radar** | Cantonal pre-audit safety score (0–100) before submission |
-| 💰 **Tax-Saving Advisory** | Pillar 3a gap, dual-earner deduction, healthcare franchise optimizer, Quellensteuer NOV |
+| 💡 **Tax-Saving Advisory** | Pillar 3a gap, dual-earner deduction, healthcare franchise optimizer, Quellensteuer NOV |
+| 📋 **Canton eTax Filling Guides** | Box-by-box filing instructions for official portals (TaxMe, eTax.zh, VaudTax, GeTax) |
 | 📝 **Official Deliverables** | Steuerdossier, eTax step-by-step guide, Fristerstreckung letter |
-| 🌐 **Multilingual** | DE / FR / IT / EN auto-detection; official letters in canton's language |
-| 🔒 **Privacy (DSG/FADP)** | AHV and IBAN auto-masking in all summaries |
+| 🌐 **Multilingual** | DE / FR / IT / EN / ZH auto-detection; official letters in canton's language |
+| 🔒 **Privacy (DSG/FADP)** | 100% local in `./user/`; AHV and IBAN auto-masking in all summaries |
 
 ---
 

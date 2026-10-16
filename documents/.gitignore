@@ -1,0 +1,4 @@
+# Protect confidential tax documents from being committed to git
+*
+!.gitignore
+!README.md

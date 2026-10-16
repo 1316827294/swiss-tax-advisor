@@ -32,3 +32,5 @@ jobs:
         python3 scripts/user_profile.py set profile '{"address": {"canton": "ZH", "commune": "Zürich", "postal_code": "8001"}}'
         python3 scripts/user_profile.py get profile
         python3 scripts/user_profile.py status
+        python3 scripts/parse_documents.py scan 2025
+        python3 scripts/etax_guide_generator.py generate 2025
