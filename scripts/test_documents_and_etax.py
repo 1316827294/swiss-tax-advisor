@@ -100,6 +100,42 @@ class TestDocumentsAndEtax(unittest.TestCase):
                 placeholders = re.findall(r'\{[a-zA-Z0-9_]+\}', content)
                 self.assertEqual(placeholders, [], f"Unfilled placeholders found in {d_name}: {placeholders}")
 
+    def test_broker_statement_parsing(self):
+        sample_broker = """
+        eSteuerausweis 2025 / Swissquote Bank AG
+        Depotnummer: SQ-998877
+        Steuerwert per 31.12.2025: 150'000.00 CHF
+        Bruttoertrag Dividenden: 3'500.00 CHF
+        Quellensteuer USA (DA-1): 525.00 CHF
+        Depotgebühren: 250.00 CHF
+        """
+        fpath = os.path.join(parse_documents.DOCS_DIR, "swissquote_tax_2025.txt")
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write(sample_broker)
+
+        scan_res = parse_documents.scan_documents_folder(2025)
+        self.assertEqual(scan_res["status"], "SUCCESS")
+        summary = scan_res["extracted_summary"]
+        self.assertEqual(summary["securities_value_chf"], 150000.0)
+        self.assertEqual(summary["dividend_income_chf"], 3500.0)
+        self.assertEqual(summary["us_withholding_tax_chf"], 525.0)
+        self.assertEqual(summary["depotgebuehren_chf"], 250.0)
+
+    def test_renovation_invoice_parsing(self):
+        sample_reno = """
+        Handwerkerrechnung / Malerbetrieb Muster GmbH
+        Projekt: Sanierung Fassade und Innenanstrich
+        Rechnungsbetrag: 8'500.00 CHF
+        """
+        fpath = os.path.join(parse_documents.DOCS_DIR, "renovation_2025.txt")
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write(sample_reno)
+
+        scan_res = parse_documents.scan_documents_folder(2025)
+        self.assertEqual(scan_res["status"], "SUCCESS")
+        summary = scan_res["extracted_summary"]
+        self.assertEqual(summary["property_maintenance_chf"], 8500.0)
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -58,9 +58,15 @@ def generate_steuerdossier(year: int) -> Dict[str, Any]:
     if s6: deductions["s6"] = s6
     s7 = tax.get("deductions", {}).get("s7_education_chf") or 0.0
     if s7: deductions["s7"] = s7
+    s8 = tax.get("deductions", {}).get("s8_property_maintenance_chf") or 0.0
+    if s8: deductions["s8"] = s8
+    depot = tax.get("deductions", {}).get("depotgebuehren_chf") or 0.0
+    if depot: deductions["depotgebuehren"] = depot
 
     ins = tax.get("deductions", {}).get("insurance_premiums_chf") or 2400.0
-    wealth = tax.get("wealth", {}).get("bank_balance_31dec_chf") or 0.0
+    bank_bal = tax.get("wealth", {}).get("bank_balance_31dec_chf") or 0.0
+    sec_val = tax.get("wealth", {}).get("securities_crypto_chf") or 0.0
+    wealth = bank_bal + sec_val
 
     # Calculate exact tax numbers
     calc = swiss_tax_math.calculate_swiss_tax(
@@ -111,6 +117,8 @@ def generate_steuerdossier(year: int) -> Dict[str, Any]:
 | **S4** | Gebundene Selbstvorsorge (Säule 3a) | CHF {s4:,.2f} | DBG Art. 33 Abs. 1 e |
 | **S6** | Drittbetreuung für Kinder (Kita) | CHF {s6:,.2f} | DBG Art. 33 Abs. 3 |
 | **S7** | Berufsorientierte Weiterbildung | CHF {s7:,.2f} | DBG Art. 33 Abs. 1 j |
+| **S8** | Liegenschaftsunterhalt (Werterhalt / Energie) | CHF {s8:,.2f} | DBG Art. 32 Abs. 2 |
+| **Depot** | Wertschriftenverwaltungskosten | CHF {depot:,.2f} | DBG Art. 32 Abs. 1 |
 | **Versicherung** | Pauschaler Versicherungsabzug | CHF {ins:,.2f} | StG / DBG Art. 33 Abs. 1 g |
 | **TOTAL** | **Gesamte deklarierte Abzüge** | **CHF {tot_deductions:,.2f}** | |
 
@@ -290,34 +298,88 @@ def generate_tax_saving_report(year: int) -> Dict[str, Any]:
 
     s4_gap = max(0.0, 7258.0 - s4_cur)
 
-    content = f"""# 🇨🇭 Proaktiver Steueroptimierungsbericht {year} (Tax-Saving Report)
+    # Inter-cantonal arbitrage simulation (Stichtag 31. Dezember)
+    tax_cur = swiss_tax_math.calculate_swiss_tax(gross, canton, "Capital", status, 0).get("total_tax_chf", 0.0)
+    tax_zg = swiss_tax_math.calculate_swiss_tax(gross, "ZG", "Zug", status, 0).get("total_tax_chf", 0.0)
+    tax_sz = swiss_tax_math.calculate_swiss_tax(gross, "SZ", "Schwyz", status, 0).get("total_tax_chf", 0.0)
+    tax_zh = swiss_tax_math.calculate_swiss_tax(gross, "ZH", "Zürich", status, 0).get("total_tax_chf", 0.0)
+    diff_zg = max(0.0, tax_cur - tax_zg)
 
-- **Kanton**: {canton}
+    content = f"""# 🇨🇭 Proaktiver Steueroptimierungsbericht {year} — 10-Dimensionen-Strategieplan
+
+- **Wohnkanton**: {canton} | **Zivilstand**: {status}
 - **Bruttoeinkommen**: CHF {gross:,.2f}
 - **Ihr aktueller Grenzsteuersatz (Marginal Rate)**: **{marginal_pct:.1f}%**
 - **Direkte Hebelwirkung**: Für je **CHF 1'000** zusätzliche legale Abzüge erhalten Sie ca. **CHF {marginal_pct * 10:,.0f}** direkte Steuerrückerstattung!
 
 ---
 
-## 💡 Priorisierte Sofortmassnahmen zur Steueroptimierung
+## 🎯 10-Dimensionen-Steueroptimierungsradar (The Ultimate 10 Dimensions)
 
-### 1. Säule 3a Maximalbetrag voll ausschöpfen
-- **Bereits einbezahlt**: CHF {s4_cur:,.2f} (Gesetzlicher Höchstbetrag 2025/2026: CHF 7'258.00)
-- **Verbleibendes Einzahlungspotenzial**: **CHF {s4_gap:,.2f}**
-- **Sofortige Bargeld-Steuerersparnis bei Einzahlung**: **CHF {saved_cash:,.2f}**
-- **Handlungsempfehlung**: Den Restbetrag von CHF {s4_gap:,.2f} vor dem 31. Dezember auf Ihr 3a-Konto überweisen.
-- **Experten-Tipp**: Eröffnen Sie bis zu 5 getrennte 3a-Vorsorgekonten. So können Sie diese zwischen Alter 60 und 65 gestaffelt auflösen und die Steuerprogression bei der Kapitalauszahlung massiv brechen!
+### 1. 🪙 Säule 3a Maximalbetrag & Gestaffelte Auszahlung
+- **Bereits einbezahlt**: CHF {s4_cur:,.2f} / Gesetzlicher Höchstbetrag 2025/2026: CHF 7'258.00
+- **Verbleibendes Einzahlungspotenzial**: **CHF {s4_gap:,.2f}** (Sofortige Steuerersparnis: **CHF {saved_cash:,.2f}**)
+- **Empfehlung**: Restbetrag vor dem 31. Dezember einzahlen. Eröffnen Sie 3 bis 5 getrennte 3a-Vorsorgekonten, um diese im Alter gestaffelt aufzulösen und die progressive Kapitalauszahlungssteuer massiv zu brechen!
 
-### 2. Krankenkassen-Franchise: Optimierung 300 vs. 2500
-- **Faustregel**: Liegen Ihre jährlichen Arztrechnungen voraussichtlich unter **CHF 1'800–2'000**, wählen Sie immer die **Franchise 2'500** (spart bis zu CHF 1'200 Prämie netto pro Jahr).
-- Liegen Ihre planbaren Gesundheitskosten darüber, wählen Sie die **Franchise 300**.
+### 2. 🛡️ Säule 2 (BVG Pensionskasse) Einkauf
+- **Steuerhebel**: Jeder eingezahlte Franken zur Schliessung von Beitragslücken (Einkaufspotenzial gemäss PK-Ausweis) mindert das steuerbare Einkommen 1:1 zum Grenzsteuersatz von {marginal_pct:.1f}%.
+- **⚠️ 3-Jahres-Sperrfrist**: Nach einem Einkauf darf das Vorsorgeguthaben 3 Jahre lang nicht in Kapitalform bezogen werden (z.B. für Wohneigentum oder Auswanderung), sonst droht rückwirkende Aberkennung des Steuerabzugs samt Verzugszins!
 
-### 3. Krankheitskosten: Die 5%-Hürde im Auge behalten
-- Krankheitskosten sind erst abziehbar, wenn sie 5% des Reineinkommens (ca. CHF {gross * 0.05:,.0f}) übersteigen.
-- **Strategie (Bunching)**: Schieben Sie planbare Zahnarzt- oder Facharztbehandlungen nach Möglichkeit in dasselbe Kalenderjahr zusammen, um die 5%-Hürde wirksam zu überspringen!
+### 3. 🏡 Liegenschaftsunterhalt & Sanierung (Werterhalt vs. Energie)
+- **Werterhaltend (100% abziehbar)**: Malerarbeiten, Reparaturen, Küchen-/Badersatz sind voll im Steuerjahr abzugsfähig (DBG Art. 32 Abs. 2).
+- **Energiesparmassnahmen**: Photovoltaik, Wärmepumpen, Wärmedämmung sind steuerlich werterhaltenden Kosten gleichgestellt und können bei Überschreitung des Reineinkommens auf bis zu 2 Folgejahre übertragen werden.
+- **Pauschale vs. Effektiv**: In Jahren ohne Grossreparaturen immer die Pauschale (10% bzw. 20% des Eigenmietwerts) wählen; in Sanierungsjahren alle Handwerkerrechnungen effektiv deklarieren.
 
-### 4. Berufsauslagen & Home-Office
-- Achten Sie darauf, ob Sie die Pauschale oder effektive Kosten geltend machen. Bei 40%+ Home-Office-Pflicht durch den Arbeitgeber kann ein privates Arbeitszimmer steuermindernd geltend gemacht werden (BGE 140 II 157).
+### 4. 📈 Wertschriften & Kapitalanlagen
+- **Steuerfreie private Kapitalgewinne**: Kursgewinne aus Aktien, ETFs und Krypto sind unter DBG Art. 16 Abs. 3 zu 100% steuerfrei.
+- **Formular DA-1 / R-US 164**: Bei US-Aktien und ETFs die 15% US-Quellensteuer auf Dividenden via DA-1 vollumfänglich auf die Schweizer Einkommenssteuer anrechnen lassen.
+- **Depotgebühren**: Bankspesen für die Verwaltung von Wertschriften sind als Vermögensverwaltungskosten abziehbar (DBG Art. 32 Abs. 1).
+
+### 5. 👨‍👩‍👧 Familie, Kinder & Betreuung
+- **Drittbetreuungskosten (Kita)**: Abzug von bis zu CHF 25'500 pro Kind bei der direkten Bundessteuer sowie kantonalen Höchstabzügen.
+- **Zweiverdienerabzug**: Bei erwerbstätigen Ehepaaren wird das Zweiteinkommen zu 50% steuerfrei gestellt (Bundesmaximum: CHF 13'600).
+- **Kinderabzug**: Bundessteuer CHF 6'700 pro Kind; kantonal zwischen CHF 6'000 und 12'000.
+
+### 6. 🏥 Gesundheit & Krankheitskosten
+- **5%-Hürde & Bunching**: Selbstgetragene Krankheitskosten (Zahnarzt, Brillen, Selbstbehalte) sind ab 5% des Reineinkommens (ab ca. CHF {gross * 0.05:,.0f}) abzugsfähig. Planbare Behandlungen in dasselbe Steuerjahr bündeln!
+- **Franchise 300 vs. 2500**: Bei planbaren Gesundheitskosten unter CHF 1'800/Jahr stets Franchise 2500 wählen (spart bis zu CHF 1'200 Prämie netto pro Jahr).
+- **Behinderungsbedingte Kosten**: Bei ärztlich attestierter chronischer Beeinträchtigung greift der Abzug ab dem 1. Franken ohne 5%-Selbstbehalt.
+
+### 7. 💼 Berufsauslagen & Homeoffice
+- **Homeoffice-Arbeitszimmer**: Wenn der Arbeitgeber keinen festen Arbeitsplatz bereitstellt und ein separater Raum ausschliesslich beruflich genutzt wird, kann der anteilige Mietzins steuerwirksam abgezogen werden (BGE 140 II 157).
+- **Pauschale vs. Effektiv (Übrige Berufskosten)**: Standardpauschale von 3% des Nettolohns (CHF 2'000–4'000) beanspruchen oder bei teuren Arbeitsmitteln die effektiven Quittungen einreichen.
+
+### 8. 🎓 Weiterbildung & Umschulung
+- **S7 Bildungsabzug**: Bis zu CHF 12'900 (Bundessteuer) für berufsbezogene Kurse, Fachprüfungen, Nachdiplomstudien und Umschulungen voll abzugsfähig.
+
+### 9. 🎗️ Gemeinnützige Zuwendungen & Spenden
+- Zuwendungen an steuerbefreite Hilfswerke mit ZEWO-Gütesiegel sind bis zu 20% des Reineinkommens abzugsfähig. Spendenquittungen ab CHF 100 beilegen.
+
+### 10. 🗺️ Wohnsitzwechsel & Stichtagsprinzip (31. Dezember)
+- Die Steuerpflicht für das gesamte Kalenderjahr richtet sich ausschliesslich nach dem Wohnsitz per **31. Dezember** (Art. 4b StHG). Ein Umzug vor Silvester in einen steuergünstigeren Kanton oder eine steuergünstigere Gemeinde spart Steuern für das gesamte Jahr rückwirkend!
+
+---
+
+## 📊 Interkantonale Steuerarbitrage-Simulation (Gleiches Bruttoeinkommen CHF {gross:,.2f})
+
+| Kanton / Gemeinde | Geschätzte Gesamtsteuer (CHF) | Differenz zu Ihrem aktuellen Wohnort |
+|---|---|---|
+| **Ihr Wohnort ({canton})** | **CHF {tax_cur:,.2f}** | **Basis** |
+| 🏔️ Zug (ZG, Stadt Zug) | CHF {tax_zg:,.2f} | **Ersparnis: CHF {diff_zg:,.2f} / Jahr** |
+| 🏔️ Schwyz (SZ, Wollerau) | CHF {tax_sz:,.2f} | **Ersparnis: CHF {max(0.0, tax_cur - tax_sz):,.2f} / Jahr** |
+| 🏙️ Zürich (ZH, Stadt Zürich) | CHF {tax_zh:,.2f} | {f"Ersparnis: CHF {tax_cur - tax_zh:,.2f}" if tax_cur > tax_zh else f"Mehrkosten: CHF {tax_zh - tax_cur:,.2f}"} |
+
+---
+
+## 📎 Checkliste der amtlichen Beilagen (Vor Einreichung prüfen)
+
+Folgende Belege müssen der Steuererklärung zwingend elektronisch beigefügt werden:
+- [ ] **Lohnausweis** aller Arbeitgeber (Ziffer 1–15)
+- [ ] **Säule 3a Einzahlungsbescheinigung** der Bank / Stiftung
+- [ ] **Bank- und Depotausweise per 31.12** (Zins- und Saldoausweise, Steuerausweise mit DA-1)
+- [ ] **Handwerker- und Renovationsrechnungen** (bei effektivem Liegenschaftsunterhalt)
+- [ ] **Weiterbildungsbelege und Kursrechnungen** (bei Abzug über S7)
+- [ ] **Spendenbescheinigungen** (bei gemeinnützigen Spenden > CHF 100)
 """
     save_res = user_profile.cmd_save_report(year, "tax_saving_report", content)
     return {"status": "SUCCESS", "type": "tax_saving_report", "path": save_res.get("path"), "content": content}

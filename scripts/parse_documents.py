@@ -158,6 +158,121 @@ def parse_bank_statement(text: str) -> Dict[str, Any]:
 
     return data
 
+def parse_broker_statement(text: str) -> Dict[str, Any]:
+    """
+    Parses Swiss/International Broker Statements (eSteuerausweis / Depotauszug).
+    Supports Swissquote, IBKR (Interactive Brokers), UBS, Degiro, Saxo Bank.
+    Extracts 31.12 portfolio market value, gross dividends, US withholding tax (for DA-1),
+    and custody fees (Wertschriftenverwaltungskosten / Depotgebühren).
+    """
+    data = {}
+    is_broker = bool(re.search(
+        r'(?:eSteuerausweis|Steuerausweis|Depotauszug|Depotbestand|Wertschriftenverzeichnis|'
+        r'Interactive\s*Brokers|IBKR|Swissquote|Degiro|Saxo|Relev(?:é|e)\s*fiscal|Portefeuille|'
+        r'Securities\s*Summary)', text, re.IGNORECASE
+    ))
+    if not is_broker:
+        return data
+
+    # 1. Total Portfolio Market Value per 31.12 (Steuerwert / Kurswert)
+    m_val = re.search(
+        r'(?:Steuerwert|Depotwert|Kurswert|Portfolio\s*Value|Total\s*Wertschriften|'
+        r'Depotbestand|Solde\s*titres)[^\n\r]*?[:\s]\s*([0-9][0-9\'’`\s]{2,12}(?:\.[0-9]{2})?)',
+        text, re.IGNORECASE
+    )
+    if m_val:
+        val = _clean_chf(m_val.group(1))
+        if val is not None:
+            data["securities_value_chf"] = val
+
+    # 2. Gross Dividends / Ertrag
+    m_div = re.search(
+        r'(?:Bruttoertrag|Dividenden|Ertrag|Total\s*Dividends|Revenus\s*bruts)[^\n\r]*?[:\s]\s*([0-9][0-9\'’`\s]{1,10}(?:\.[0-9]{2})?)',
+        text, re.IGNORECASE
+    )
+    if m_div:
+        val = _clean_chf(m_div.group(1))
+        if val is not None:
+            data["dividend_income_chf"] = val
+
+    # 3. US / Foreign Withholding Tax for Form DA-1 reclaim
+    m_us_tax = re.search(
+        r'(?:US\s*Withholding|Quellensteuer\s*USA|Retenue\s*(?:US|USA)|Non-Recoverable\s*US\s*Tax|DA-1)[^\n\r]*?[:\s]\s*([0-9][0-9\'’`\s]{1,8}(?:\.[0-9]{2})?)',
+        text, re.IGNORECASE
+    )
+    if m_us_tax:
+        val = _clean_chf(m_us_tax.group(1))
+        if val is not None:
+            data["us_withholding_tax_chf"] = val
+
+    # 4. Custody fees / Depotgebühren (100% tax deductible under Art. 32 DBG)
+    m_depot = re.search(
+        r'(?:Depotgeb(?:ü|ue)hren|Verwaltungsgeb(?:ü|ue)hren|Custody\s*Fees|Frais\s*de\s*garde)[^\n\r]*?[:\s]\s*([0-9][0-9\'’`\s]{1,8}(?:\.[0-9]{2})?)',
+        text, re.IGNORECASE
+    )
+    if m_depot:
+        val = _clean_chf(m_depot.group(1))
+        if val is not None:
+            data["depotgebuehren_chf"] = val
+
+    return data
+
+def parse_renovation_invoice(text: str) -> Dict[str, Any]:
+    """
+    Parses property renovation and maintenance bills (Handwerkerrechnungen / Liegenschaftsunterhalt).
+    Classifies under Swiss tax law (DBG Art. 32 Abs. 2):
+      - Werterhaltend (Value-preserving): 100% deductible in tax year
+      - Energiesparmassnahmen (Energy-saving): 100% deductible + multi-year carryover
+      - Wertvermehrend (Value-adding): Non-deductible for income tax (saved for real estate capital gains)
+    """
+    data = {}
+    is_reno = bool(re.search(
+        r'(?:Handwerker|Renovation|Sanierung|Maler|Baurechnung|Elektro|Sanit(?:ä|ae)r|'
+        r'Heizung|Solar|Photovoltaik|Liegenschaftsunterhalt|Umbau|Reparatur)',
+        text, re.IGNORECASE
+    ))
+    if not is_reno:
+        return data
+
+    # 1. Total Invoice Amount
+    m_tot = re.search(
+        r'(?:Rechnungsbetrag|Endbetrag|Totalbetrag|Total\s*CHF|Montant\s*total)[\s\:\.A-Za-z]+([0-9][0-9\'’`\s]{2,10}(?:\.[0-9]{2})?)',
+        text, re.IGNORECASE
+    )
+    total_val = _clean_chf(m_tot.group(1)) if m_tot else None
+
+    # Fallback to looking for standard CHF amount
+    if not total_val:
+        m_chf = re.findall(r'(?:CHF|Fr\.)\s*([0-9][0-9\'’`\s]{2,10}(?:\.[0-9]{2})?)', text)
+        if m_chf:
+            parsed_chfs = [_clean_chf(x) for x in m_chf if _clean_chf(x)]
+            if parsed_chfs:
+                total_val = max(parsed_chfs)
+
+    if not total_val:
+        return data
+
+    # 2. Heuristic Categorization
+    is_energy = bool(re.search(r'(?:Solar|Photovoltaik|W(?:ä|ae)rmepumpe|Isolation|D(?:ä|ae)mmung|Energiespar|Fensterersatz|Zweifach|Dreifachverglasung)', text, re.IGNORECASE))
+    is_value_adding = bool(re.search(r'(?:Neubau|Anbau|Schwimmbad|Pool|Wintergarten|Sauna|Aufstockung)', text, re.IGNORECASE))
+
+    if is_energy:
+        category = "ENERGIEMASSNAHME" # 100% deductible + carryover
+        tax_deductible = True
+    elif is_value_adding:
+        category = "WERTVERMEHREND"   # Not deductible for income tax
+        tax_deductible = False
+    else:
+        category = "WERTERHALTEND"    # Standard 100% deductible
+        tax_deductible = True
+
+    data["total_amount_chf"] = total_val
+    data["category"] = category
+    data["tax_deductible"] = tax_deductible
+    data["deductible_amount_chf"] = total_val if tax_deductible else 0.0
+
+    return data
+
 # ── Master Scanner ─────────────────────────────────────────────────────────────
 def scan_documents_folder(target_year: int) -> Dict[str, Any]:
     """Scans ./documents/ and auto-fills user tax profile."""
@@ -182,7 +297,13 @@ def scan_documents_folder(target_year: int) -> Dict[str, Any]:
         "bank_balance_chf": None,
         "employer_name": None,
         "employer_provided_ga": False,
-        "company_car": False
+        "company_car": False,
+        "securities_value_chf": None,
+        "dividend_income_chf": None,
+        "us_withholding_tax_chf": None,
+        "depotgebuehren_chf": None,
+        "property_maintenance_chf": 0.0,
+        "renovation_items_count": 0
     }
 
     processed_files = []
@@ -225,6 +346,34 @@ def scan_documents_folder(target_year: int) -> Dict[str, Any]:
             extracted_summary["bank_balance_chf"] = bs["bank_balance_31dec_chf"]
             file_findings.append(f"Bank balance 31.12: CHF {bs['bank_balance_31dec_chf']:,.2f}")
 
+        # 4. Check Broker Statement (eSteuerausweis / Depotauszug)
+        broker = parse_broker_statement(raw_text)
+        if broker:
+            if "securities_value_chf" in broker:
+                extracted_summary["securities_value_chf"] = (extracted_summary["securities_value_chf"] or 0.0) + broker["securities_value_chf"]
+                file_findings.append(f"Securities portfolio per 31.12: CHF {broker['securities_value_chf']:,.2f}")
+            if "dividend_income_chf" in broker:
+                extracted_summary["dividend_income_chf"] = (extracted_summary["dividend_income_chf"] or 0.0) + broker["dividend_income_chf"]
+                file_findings.append(f"Dividend income: CHF {broker['dividend_income_chf']:,.2f}")
+            if "us_withholding_tax_chf" in broker:
+                extracted_summary["us_withholding_tax_chf"] = (extracted_summary["us_withholding_tax_chf"] or 0.0) + broker["us_withholding_tax_chf"]
+                file_findings.append(f"US Withholding Tax (DA-1 eligible): CHF {broker['us_withholding_tax_chf']:,.2f}")
+            if "depotgebuehren_chf" in broker:
+                extracted_summary["depotgebuehren_chf"] = (extracted_summary["depotgebuehren_chf"] or 0.0) + broker["depotgebuehren_chf"]
+                file_findings.append(f"Custody fees (Deductible): CHF {broker['depotgebuehren_chf']:,.2f}")
+
+        # 5. Check Renovation & Property Maintenance Bills
+        reno = parse_renovation_invoice(raw_text)
+        if reno and reno.get("total_amount_chf"):
+            amt = reno["total_amount_chf"]
+            cat = reno["category"]
+            if reno.get("tax_deductible"):
+                extracted_summary["property_maintenance_chf"] += amt
+                extracted_summary["renovation_items_count"] += 1
+                file_findings.append(f"Renovation [{cat}]: CHF {amt:,.2f} (100% Tax Deductible)")
+            else:
+                file_findings.append(f"Renovation [{cat}]: CHF {amt:,.2f} (Value-adding: saved for real estate capital gains)")
+
         if file_findings:
             processed_files.append({
                 "filename": fname,
@@ -241,6 +390,12 @@ def scan_documents_folder(target_year: int) -> Dict[str, Any]:
         auto_filled_patch["deductions"]["s2_meals_chf"] = 1600.0
     if extracted_summary["bank_balance_chf"] is not None:
         auto_filled_patch["wealth"]["bank_balance_31dec_chf"] = extracted_summary["bank_balance_chf"]
+    if extracted_summary["securities_value_chf"] is not None:
+        auto_filled_patch["wealth"]["securities_crypto_chf"] = extracted_summary["securities_value_chf"]
+    if extracted_summary["depotgebuehren_chf"] is not None:
+        auto_filled_patch["deductions"]["depotgebuehren_chf"] = extracted_summary["depotgebuehren_chf"]
+    if extracted_summary["property_maintenance_chf"] > 0:
+        auto_filled_patch["deductions"]["s8_property_maintenance_chf"] = extracted_summary["property_maintenance_chf"]
 
     persisted = False
     if user_profile and any(auto_filled_patch.values()):
@@ -269,7 +424,15 @@ def _generate_greeting_zh(ext: Dict[str, Any], files: List[Dict]) -> str:
         lines.append(f"• **第三支柱 (Pillar 3a)**: CHF {ext['pillar3a_chf']:,.2f}")
     if ext.get("bank_balance_chf") is not None:
         lines.append(f"• **12月31日银行总余额**: CHF {ext['bank_balance_chf']:,.2f}")
-    lines.append("\n上述数据已自动填入您的纳税档案中！接下来我们只需要确认少量补充信息即可完成全套申报。")
+    if ext.get("securities_value_chf") is not None:
+        lines.append(f"• **12月31日股票证券市值**: CHF {ext['securities_value_chf']:,.2f} *(资本利得依法100%免税)*")
+    if ext.get("us_withholding_tax_chf") is not None:
+        lines.append(f"• **美股股息预扣税 (DA-1)**: CHF {ext['us_withholding_tax_chf']:,.2f} *(已自动锁定跨国双重征税全额退税额)*")
+    if ext.get("depotgebuehren_chf") is not None:
+        lines.append(f"• **证券托管管理费 (Depotgebühren)**: CHF {ext['depotgebuehren_chf']:,.2f} *(法定100%抵税)*")
+    if ext.get("property_maintenance_chf") and ext["property_maintenance_chf"] > 0:
+        lines.append(f"• **房产装修维修支出 (共 {ext.get('renovation_items_count', 1)} 笔)**: 确认可扣除 CHF {ext['property_maintenance_chf']:,.2f} *(维持价值/节能100%抵扣)*")
+    lines.append("\n上述数据已自动填入您的本地纳税档案中！接下来我们只需要确认少量补充信息即可完成全套申报。")
     return "\n".join(lines)
 
 def _generate_greeting_en(ext: Dict[str, Any], files: List[Dict]) -> str:
@@ -282,6 +445,14 @@ def _generate_greeting_en(ext: Dict[str, Any], files: List[Dict]) -> str:
         lines.append(f"• Pillar 3a contribution: CHF {ext['pillar3a_chf']:,.2f}")
     if ext.get("bank_balance_chf") is not None:
         lines.append(f"• Bank balance as of Dec 31: CHF {ext['bank_balance_chf']:,.2f}")
+    if ext.get("securities_value_chf") is not None:
+        lines.append(f"• Securities portfolio as of Dec 31: CHF {ext['securities_value_chf']:,.2f} (Capital gains 100% tax-free)")
+    if ext.get("us_withholding_tax_chf") is not None:
+        lines.append(f"• US Dividend Withholding Tax (DA-1): CHF {ext['us_withholding_tax_chf']:,.2f} (Auto-allocated for double tax treaty credit)")
+    if ext.get("depotgebuehren_chf") is not None:
+        lines.append(f"• Custody management fees: CHF {ext['depotgebuehren_chf']:,.2f} (100% tax-deductible)")
+    if ext.get("property_maintenance_chf") and ext["property_maintenance_chf"] > 0:
+        lines.append(f"• Property maintenance deductions: CHF {ext['property_maintenance_chf']:,.2f} (Werterhaltend/Energiespar)")
     lines.append("\nAll extracted values have been saved to your local tax file!")
     return "\n".join(lines)
 
@@ -306,7 +477,9 @@ def main():
         res = {
             "lohnausweis": parse_lohnausweis(txt),
             "pillar3a": parse_pillar_3a(txt),
-            "bank_statement": parse_bank_statement(txt)
+            "bank_statement": parse_bank_statement(txt),
+            "broker_statement": parse_broker_statement(txt),
+            "renovation_invoice": parse_renovation_invoice(txt)
         }
     else:
         parser.print_help()
