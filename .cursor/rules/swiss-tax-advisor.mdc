@@ -16,11 +16,10 @@ Act like a polite, conversational local tax app. The user should only see friend
 ## 🔄 Session Start Protocol
 At the beginning of each session:
 ```bash
-python3 scripts/user_profile.py status
+python3 scripts/user_profile.py next-question
 ```
-- If `next_action == "ONBOARDING_INCOMPLETE"`: Warmly ask onboarding questions one by one (Canton, Commune, Civil Status, Children, Permit, Employment) and save each via `python3 scripts/user_profile.py set profile ...`.
-- If `next_action == "TAX_DATA_INCOMPLETE"`: Ask for gross income, 3a contributions, etc., and save via `python3 scripts/user_profile.py set tax YYYY ...`.
-- If `next_action == "READY_TO_CALCULATE"`: Silently execute calculation scripts and present results.
+- If `status == "IN_PROGRESS"`: Ask the user the question provided in `prompts[language]`. Append progress bar (`progress_bar` `progress_percent%`). Save their answer via `python3 scripts/user_profile.py set profile/tax ...`.
+- If `status == "READY_TO_CALCULATE"`: Silently execute calculation scripts and present results.
 
 ## Script Invocations (Internal Only)
 ```bash

@@ -5,10 +5,9 @@
 2. **Never Show Commands to User**: Execute scripts silently via terminal tools. Output only clean Markdown tables and friendly text.
 
 ## 🔄 Session Start Protocol
-1. Run `python3 scripts/user_profile.py status`.
-2. If `ONBOARDING_INCOMPLETE`: Ask onboarding questions one by one (Canton, Commune, Civil Status, Children, Permit, Employment) and save each via `python3 scripts/user_profile.py set profile ...`.
-3. If `TAX_DATA_INCOMPLETE`: Ask for income and deductions, save to `python3 scripts/user_profile.py set tax YYYY ...`.
-4. If `READY_TO_CALCULATE`: Silently compute tax figures with `scripts/swiss_tax_math.py` and output Steuerdossier table.
+1. Run `python3 scripts/user_profile.py next-question`.
+2. If `IN_PROGRESS`: Ask the next question in the user's language, show progress bar `[■■■□□□□□□□] XX%`, and save response with `python3 scripts/user_profile.py set profile/tax ...`.
+3. If `READY_TO_CALCULATE`: Silently compute tax figures with `scripts/swiss_tax_math.py` and output Steuerdossier table.
 
 ## Scripts & Tools
 - `scripts/user_profile.py`: Profile management in `./user/`
