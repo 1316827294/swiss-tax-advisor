@@ -1,53 +1,69 @@
-# 🇨🇭 Conseiller Fiscal Suisse (`swiss-tax-advisor`)
+# 🇨🇭 Conseiller Fiscal Suisse & Déclaration d'Impôts (`swiss-tax-advisor`)
 
-[English](README.md) | [Deutsch](README.de.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Español](README.es.md) | [简体中文](README.zh.md)
+[![CI](https://github.com/1316827294/swiss-tax-advisor/actions/workflows/ci.yml/badge.svg)](https://github.com/1316827294/swiss-tax-advisor/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
+[![Multi-Platform](https://img.shields.io/badge/platforms-Claude%20%7C%20Cursor%20%7C%20Copilot%20%7C%20Windsurf%20%7C%20Cline%20%7C%20AGY-success.svg)](#-plateformes-dia-compatibles)
 
----
-
-> **Compétence Agent open-source pour la déclaration d'impôt suisse, le radar de risque fiscal et l'optimisation fiscale proactive.**  
-> Compatible avec **Claude Code**, **OpenAI Codex**, **Gemini CLI**, **Google Antigravity**, **Cursor** et **OpenClaw**.
-
----
-
-## 🚀 Capacités Clés
-
-1. **Zéro Dépendance Externe** : Conçu exclusivement avec la bibliothèque standard Python 3.10+ (`math`, `argparse`, `json`, `sys`, `unittest`). Aucun `pip install` requis.
-2. **Précision Déterministe à 5 Rappen** : Élimine les hallucinations de calcul mental des LLM sur les barèmes progressifs suisses.
-3. **Radar de Risque Cantonal (Score 0 à 100)** : Simule les contrôles automatiques de l'administration fiscale cantonale (*Risikobasierte Fallauswahl*).
-4. **Taxonomie Complète S1 à S12** : Déductions pour frais professionnels, frais de garde, 3e pilier A, double gain et pensions alimentaires.
-5. **Moteurs de Décision Stratégiques** :
-   - **Évaluateur NOV Impôt à la Source** : Analyse du gain fiscal vs. risque de rattrapage pour les titulaires de permis B.
-   - **Optimiseur de Franchise LAMal (300 vs 2500)** : Seuil de rentabilité actuariel.
-   - **Simulateur de Déménagement** : Comparaison financière des coefficients d'impôt cantonaux et communaux.
+[English](README.md) | [Deutsch](README.de.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Español](README.es.md) | [Português](README.pt.md) | [日本語](README.ja.md) | [简体中文](README.zh.md)
 
 ---
 
-## ⚡ Démarrage Rapide
+Un **skill d'agent IA open-source, souverain et déterministe** pour la déclaration d'impôt sur le revenu et la fortune dans les **26 cantons suisses**, l'auto-contrôle des risques fiscaux cantonaux et le conseil en optimisation fiscale proactive. Compatible avec **Claude Code, Cursor, GitHub Copilot, Cline, Windsurf, Aider, Devin et Google Antigravity**.
 
-Exécuter la suite de tests :
+> **Souveraineté des données garantie** : Tous les calculs d'impôts et les dossiers fiscaux restent 100% locaux dans `./user/`. Aucune donnée financière n'est transmise à des serveurs tiers.
+
+---
+
+## ⚡ Prise en main en 30 secondes (Quick Start)
+
+### 1. Cloner et installer
 ```bash
-python3 skills/swiss-tax-advisor/scripts/test_tax_engine.py
+git clone https://github.com/1316827294/swiss-tax-advisor.git
+cd swiss-tax-advisor
+
+# Installer pour votre plateforme (ex. Claude Code ou Cursor)
+./install.sh --platform claude    # ou cursor / cline / copilot / all
 ```
 
-### Exemples de Commandes CLI
+### 2. Démarrer la conversation
+Écrivez simplement à votre agent en français :
+> *"Bonjour ! Peux-tu m'aider à préparer ma déclaration d'impôts suisse pour 2025 ?"*
 
-```bash
-# 1. Calculer les impôts (Vaud, Marié, 170k brut, 3e pilier et crèche)
-python3 skills/swiss-tax-advisor/scripts/swiss_tax_math.py \
-  --gross-income 170000 --canton VD --civil-status MARRIED --children 1 \
-  --deductions '{"s1": 3300, "s4": 7258, "s6": 18000}' --json
+### 3. Traitement automatique des justificatifs & Guide eTax
+Déposez votre certificat de salaire (Lohnausweis PDF/TXT), vos attestations du 3e pilier A ou vos relevés bancaires au 31.12 dans le dossier `./documents/`. L'agent extrait automatiquement les cases clés (salaire brut, cotisations LPP, repas), calcule votre impôt fédéral, cantonal et communal, et génère un **guide pas-à-pas pour recopier les montants dans votre logiciel officiel** (VaudTax, GeTax, TaxMe, FriTax, ValTax, etc.).
 
-# 2. Évaluer la demande de taxation ordinaire ultérieure (NOV)
-python3 skills/swiss-tax-advisor/scripts/advanced_advisory.py nov \
-  --income 110000 --canton GE --deductions '{"s4": 7258, "s1": 3300}'
+---
 
-# 3. Optimiser la franchise d'assurance maladie
-python3 skills/swiss-tax-advisor/scripts/advanced_advisory.py franchise \
-  --spend 1400 --premium-300 450 --premium-2500 310
-```
+## 🌟 Fonctionnalités Clés
+
+| Module | Description |
+|---|---|
+| 🧮 **Moteur Déterministe** | Aucun calcul approximatif. Barèmes officiels pour les 26 cantons (impôt fédéral direct IFD, impôt cantonal, coefficient communal, impôt ecclésiastique, fortune) avec arrondi légal suisse à 5 centimes |
+| 📁 **Ingestion Automatique de Documents** | Déposez vos pièces dans `./documents/` : extraction instantanée du certificat de salaire (cases 1 à 15), attestations 3a et soldes bancaires |
+| 💰 **Tableau de Bord Fiscal en Direct** | Badge permanent affichant l'impôt estimé et l'économie potentielle ; calcul immédiat de la variation d'impôt (Delta) lors d'une modification |
+| 📋 **Guides Officiels Pas-à-Pas (eTax)** | Génération de listes de saisie case par case pour VaudTax (VD), GeTax (GE), TaxMe (BE), FriTax (FR), ValTax (VS), eTax.zh (ZH), etc. |
+| 🛡️ **Radar de Risque Fiscal** | Évaluation préalable des déclarations selon les algorithmes de filtrage cantonal (contrôle de nécessité pour l'AG CFF, formations continues >15%) |
+| 💡 **Optimisation Fiscale Proactive** | Calcul de l'économie marginale du 3e pilier A, déduction pour couple avec double revenu, optimisation de franchise d'assurance maladie (300 vs 2500) |
+| ⚖️ **Arbitrage Impôt à la Source (TOU / NOV)** | Analyse pour les titulaires de permis B : évalue si une demande de taxation ordinaire ultérieure (TOU) est avantageuse ou risquée |
+| 🔒 **Confidentialité LPD / FADP** | Traitement 100% hors-ligne dans `./user/` ; masquage automatique des numéros AVS et coordonnées IBAN |
+
+---
+
+## 🤖 Plateformes d'IA Compatibles
+
+| Plateforme | Automatisation | Mécanisme | Commande d'installation |
+|---|---|---|---|
+| **Claude Code** | 🟢 Entièrement automatique | Exécution en arrière-plan | `./install.sh --platform claude` |
+| **Cursor** | 🟡 Confirmation interactive | Piloté par règles Composer | `./install.sh --platform cursor` |
+| **Cline / Roo Code** | 🟢 Entièrement automatique | Exécution terminal directe | `./install.sh --platform cline` |
+| **Windsurf** | 🟡 Confirmation interactive | Cascade Rules | `./install.sh --platform windsurf` |
+| **GitHub Copilot** | 🟡 Confirmation interactive | Copilot Instructions | `./install.sh --platform copilot` |
+| **Aider / Devin** | 🟢 Entièrement automatique | Conventions & playbooks | `./install.sh --platform aider` |
+| **Google Antigravity** | 🟢 Entièrement automatique | Skill natif | `./install.sh --platform agy` |
 
 ---
 
 ## 📄 Licence
 
-Distribué sous **Licence MIT**. Voir `LICENSE` pour les détails.
+Ce projet est publié sous [Licence Apache 2.0](LICENSE).

@@ -1,58 +1,55 @@
-# 🇨🇭 Asesor Fiscal Suizo (`swiss-tax-advisor`)
+# 🇨🇭 Asesor Fiscal Suizo & Declaración de Impuestos (`swiss-tax-advisor`)
 
-[English](README.md) | [Deutsch](README.de.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Español](README.es.md) | [简体中文](README.zh.md)
+[![CI](https://github.com/1316827294/swiss-tax-advisor/actions/workflows/ci.yml/badge.svg)](https://github.com/1316827294/swiss-tax-advisor/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
+[![Multi-Platform](https://img.shields.io/badge/platforms-Claude%20%7C%20Cursor%20%7C%20Copilot%20%7C%20Windsurf%20%7C%20Cline%20%7C%20AGY-success.svg)](#-plataformas-de-ia-compatibles)
 
----
-
-> **Habilidad de Agente de código abierto para la declaración de impuestos en Suiza, radar de riesgo de auditoría y optimización fiscal proactiva.**  
-> Compatible con **Claude Code**, **OpenAI Codex**, **Gemini CLI**, **Google Antigravity**, **Cursor** y **OpenClaw**.
-
----
-
-## 🚀 Capacidades Principales
-
-1. **Cero Dependencias Externas**: Basado únicamente en la biblioteca estándar de Python 3.10+ (`math`, `argparse`, `json`, `sys`, `unittest`). No requiere `pip install`.
-2. **Precisión Determinista a 5 Rappen**: Puerta estricta que impide que los LLM realicen cálculos mentales aproximados en las tarifas progresivas suizas.
-3. **Radar de Riesgo de Auditoría Cantonal (0 a 100)**: Simula los algoritmos automáticos de las administraciones fiscales cantonales (*Risikobasierte Fallauswahl*) para corregir banderas rojas antes de la presentación.
-4. **Arquitectura Hexa-Lingüe**: Adaptación dinámica de respuestas al español, inglés, alemán, francés, italiano o chino.
-5. **Taxonomía Completa de Deducciones (S1 a S12)**: Límites legales vigentes (DBG, StHG, StG BE), deducciones por hijos (Kita), tercer pilar (Pillar 3a), pensión alimenticia y doble ingreso conyugal.
-6. **Motores de Decisión Avanzados**:
-   - **Evaluador de Retención en Origen (NOV)**: Decisión informada sobre si solicitar la declaración ordinaria o mantener la retención.
-   - **Optimizador de Franquicia del Seguro Médico (300 vs. 2500)**: Cálculo actuarial del punto de equilibrio.
-   - **Simulador de Reubicación Cantonal**: Comparativa del multiplicador fiscal (*Steuerfuss*) entre cantones.
+[English](README.md) | [Deutsch](README.de.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Español](README.es.md) | [Português](README.pt.md) | [日本語](README.ja.md) | [简体中文](README.zh.md)
 
 ---
 
-## ⚡ Inicio Rápido y Pruebas
+Un **skill de agente IA de código abierto, soberano y determinista** para la declaración de impuestos sobre la renta y el patrimonio en los **26 cantones suizos**, pre-auditoría de riesgos fiscales y asesoría proactiva para optimizar el ahorro fiscal. Compatible con **Claude Code, Cursor, GitHub Copilot, Cline, Windsurf, Aider, Devin y Google Antigravity**.
 
-Ejecutar la suite de pruebas local:
+> **Soberanía de datos garantizada**: Todos los cálculos y expedientes fiscales permanecen 100% locales en la carpeta `./user/`. Ningún dato financiero se envía a servidores de terceros.
+
+---
+
+## ⚡ Inicio Rápido en 30 Segundos (Quick Start)
+
+### 1. Clonar e instalar
 ```bash
-python3 skills/swiss-tax-advisor/scripts/test_tax_engine.py
+git clone https://github.com/1316827294/swiss-tax-advisor.git
+cd swiss-tax-advisor
+
+# Instale en su plataforma favorita (ej. Claude Code o Cursor)
+./install.sh --platform claude    # o cursor / cline / copilot / all
 ```
 
-### Ejemplos de Comandos CLI
+### 2. Iniciar la conversación
+Hable con su asistente en español:
+> *"¡Hola! Ayúdame a rellenar mi declaración de impuestos en Suiza para el año 2025."*
 
-```bash
-# 1. Calcular impuestos (Berna, Casado, Ingreso bruto 170k, con 3a y guardería)
-python3 skills/swiss-tax-advisor/scripts/swiss_tax_math.py \
-  --gross-income 170000 --canton BE --civil-status MARRIED --children 1 \
-  --deductions '{"s1": 3300, "s4": 7258, "s6": 18000}' --json
+### 3. Ingesta automática de documentos y Guía eTax
+Coloque su certificado de salario (Lohnausweis PDF/TXT), justificantes del 3er pilar o extractos bancarios al 31.12 en la carpeta `./documents/`. El asistente leerá automáticamente las casillas oficiales, calculará los impuestos federales, cantonales y comunales, y generará una **guía casilla por casilla para rellenar el portal oficial de su cantón** (TaxMe, eTax.zh, VaudTax, GeTax, etc.).
 
-# 2. Consultar tasa impositiva marginal y ahorro con Pilar 3a
-python3 skills/swiss-tax-advisor/scripts/marginal_rate_calc.py \
-  --income 120000 --canton ZH --deduction 7258 --category PILLAR_3A --json
+---
 
-# 3. Evaluar solicitud de tributación ordinaria posterior (NOV)
-python3 skills/swiss-tax-advisor/scripts/advanced_advisory.py nov \
-  --income 110000 --canton ZH --deductions '{"s4": 7258, "s1": 3300}'
+## 🌟 Características Principales
 
-# 4. Optimizar franquicia de seguro médico
-python3 skills/swiss-tax-advisor/scripts/advanced_advisory.py franchise \
-  --spend 1400 --premium-300 450 --premium-2500 310
-```
+| Módulo | Descripción |
+|---|---|
+| 🧮 **Motor Determinista** | Sin estimaciones mentales. Baremos oficiales para los 26 cantones (impuesto federal directo IFD, cantonal, coeficiente municipal, eclesiástico, patrimonio) con redondeo suizo legal a 5 céntimos |
+| 📁 **Ingesta Automática de Documentos** | Coloque archivos en `./documents/`: extracción instantánea del certificado de salario (casillas 1 a 15), 3er pilar y saldos bancarios |
+| 💰 **Panel Fiscal en Tiempo Real** | Visualización continua del impuesto estimado y del ahorro potencial; cálculo inmediato de la diferencia (Delta) al modificar datos |
+| 📋 **Guías Oficiales Casilla por Casilla (eTax)** | Tablas de equivalencia para TaxMe (BE), eTax.zh (ZH), VaudTax (VD), GeTax (GE), EasyTax (AG), BalTax (BS), eTax.zug (ZG), etc. |
+| 🛡️ **Radar de Riesgo de Auditoría** | Simulación del cribado cantonal (*Risikobasierte Fallauswahl*, principio de necesidad para el abono general GA de SBB, formación >15%) |
+| 💡 **Optimización Fiscal Proactiva** | Cálculo del tipo marginal y ahorro por el 3er pilar A, deducción por doble ingreso conyugal, optimización de franquicia del seguro médico (300 vs 2500) |
+| ⚖️ **Decisión sobre Impuesto en la Fuente (NOV)** | Evaluación para titulares de permiso B: calcula si conviene solicitar la tributación ordinaria posterior (NOV) sin riesgo de pagar más |
+| 🔒 **Privacidad LPD / FADP** | Ejecución 100% local en `./user/`; enmascaramiento automático de números AVS y cuentas IBAN |
 
 ---
 
 ## 📄 Licencia
 
-Distribuido bajo la **Licencia MIT**. Consulte `LICENSE` para más detalles.
+Publicado bajo la [Licencia Apache 2.0](LICENSE).
