@@ -325,13 +325,15 @@ def generate_tax_saving_report(year: int) -> Dict[str, Any]:
 - **Steuerhebel**: Jeder eingezahlte Franken zur Schliessung von Beitragslücken (Einkaufspotenzial gemäss PK-Ausweis) mindert das steuerbare Einkommen 1:1 zum Grenzsteuersatz von {marginal_pct:.1f}%.
 - **⚠️ 3-Jahres-Sperrfrist**: Nach einem Einkauf darf das Vorsorgeguthaben 3 Jahre lang nicht in Kapitalform bezogen werden (z.B. für Wohneigentum oder Auswanderung), sonst droht rückwirkende Aberkennung des Steuerabzugs samt Verzugszins!
 
-### 3. 🏡 Liegenschaftsunterhalt & Sanierung (Werterhalt vs. Energie)
+### 3. 🏡 Liegenschaftsunterhalt & Eigenmietwert-Reform (2026/2027 Zeitfenster)
 - **Werterhaltend (100% abziehbar)**: Malerarbeiten, Reparaturen, Küchen-/Badersatz sind voll im Steuerjahr abzugsfähig (DBG Art. 32 Abs. 2).
-- **Energiesparmassnahmen**: Photovoltaik, Wärmepumpen, Wärmedämmung sind steuerlich werterhaltenden Kosten gleichgestellt und können bei Überschreitung des Reineinkommens auf bis zu 2 Folgejahre übertragen werden.
-- **Pauschale vs. Effektiv**: In Jahren ohne Grossreparaturen immer die Pauschale (10% bzw. 20% des Eigenmietwerts) wählen; in Sanierungsjahren alle Handwerkerrechnungen effektiv deklarieren.
+- **Energiesparmassnahmen & Verlustübertrag**: Photovoltaik, Wärmepumpen, Wärmedämmung können bei Überschreitung des Reineinkommens auf bis zu 2 Folgejahre übertragen werden.
+- **Pauschale vs. Effektiv**: In Jahren ohne Grossreparaturen die Pauschale (10% bzw. 20% des Eigenmietwerts) wählen; in Sanierungsjahren alle Handwerkerrechnungen effektiv deklarieren.
+- **⚡ Strategischer Reform-Tipp (Systemwechsel Eigenmietwert)**: Das Schweizer Parlament hat die Abschaffung des Eigenmietwerts beschlossen (geplantes Inkrafttreten 2026/2027). Mit dem Wegfall entfällt künftig auch die Abzugsfähigkeit von Unterhaltskosten auf Bundesebene! Nutzen Sie das verbleibende Zeitfenster jetzt, um anstehende Renovationen und energetische Sanierungen noch voll steuerwirksam durchzuführen!
 
-### 4. 📈 Wertschriften & Kapitalanlagen
-- **Steuerfreie private Kapitalgewinne**: Kursgewinne aus Aktien, ETFs und Krypto sind unter DBG Art. 16 Abs. 3 zu 100% steuerfrei.
+### 4. 📈 Wertschriften & Krypto-Assets (Web3)
+- **Steuerfreie private Kapitalgewinne**: Kursgewinne aus Aktien, ETFs, Bitcoin und Ethereum sind unter DBG Art. 16 Abs. 3 zu 100% steuerfrei (ESTV-Kreisschreiben).
+- **Krypto Staking & Airdrops**: Staking-Rewards und Yield-Erträge gelten steuerrechtlich als Ertrag aus beweglichem Vermögen und sind als Einkommen zu versteuern.
 - **Formular DA-1 / R-US 164**: Bei US-Aktien und ETFs die 15% US-Quellensteuer auf Dividenden via DA-1 vollumfänglich auf die Schweizer Einkommenssteuer anrechnen lassen.
 - **Depotgebühren**: Bankspesen für die Verwaltung von Wertschriften sind als Vermögensverwaltungskosten abziehbar (DBG Art. 32 Abs. 1).
 

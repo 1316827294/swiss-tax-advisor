@@ -273,22 +273,89 @@ def parse_renovation_invoice(text: str) -> Dict[str, Any]:
 
     return data
 
+def parse_pensionskassen_ausweis(text: str) -> Dict[str, Any]:
+    """
+    Parses Swiss 2nd Pillar Pension Certificate (Pensionskassenausweis / Vorsorgeausweis).
+    Extracts maximal voluntary buyback capacity (Einkaufspotenzial) and current retirement assets (Altersguthaben).
+    Crucial for high earners: Einkauf is 1:1 tax-deductible, but has a statutory 3-year capital withdrawal lockup.
+    """
+    data = {}
+    is_pk = bool(re.search(
+        r'(?:Pensionskasse|Vorsorgeausweis|Pensionskassenausweis|PK-Ausweis|BVG-Ausweis|'
+        r'Certificat\s*de\s*pr(?:é|e)voyance|Avoir\s*LPP|BVG\s*Beitr(?:ä|ae)ge)', text, re.IGNORECASE
+    ))
+    if not is_pk:
+        return data
+
+    # 1. Maximal possible buyback (Einkaufspotenzial / Rachat maximum possible)
+    m_buy = re.search(
+        r'(?:Maximal\s*m(?:ö|oe)glicher\s*Einkauf|Einkaufspotenzial|Freiwilliger\s*Einkauf|'
+        r'Rachat\s*maximum\s*possible|Potentiel\s*de\s*rachat|Einkauf\s*in\s*die\s*Pensionskasse)[^\n\r]*?[:\s]\s*([0-9][0-9\'’`\s]{2,10}(?:\.[0-9]{2})?)',
+        text, re.IGNORECASE
+    )
+    if m_buy:
+        val = _clean_chf(m_buy.group(1))
+        if val is not None:
+            data["bvg_buyback_potential_chf"] = val
+
+    # 2. Existing retirement assets (Altersguthaben / Avoir de vieillesse)
+    m_asset = re.search(
+        r'(?:Altersguthaben|Vorhandenes\s*Guthaben|Avoir\s*de\s*vieillesse|Kapital\s*per|Sparkapital)[^\n\r]*?[:\s]\s*([0-9][0-9\'’`\s]{2,10}(?:\.[0-9]{2})?)',
+        text, re.IGNORECASE
+    )
+    if m_asset:
+        val = _clean_chf(m_asset.group(1))
+        if val is not None:
+            data["bvg_current_assets_chf"] = val
+
+    return data
+
+def parse_crypto_statement(text: str) -> Dict[str, Any]:
+    """
+    Parses Cryptocurrency / Web3 Tax Summaries (Binance, Kraken, Coinbase, Ledger, Trezor, CoinTracking).
+    Under Swiss tax law (ESTV circular):
+      - 31.12 Crypto Holdings: 100% Tax-Free Private Capital Gains (only micro-wealth tax)
+      - Staking, Mining & Airdrop Rewards: Taxable as investment income (Ertrag)
+    """
+    data = {}
+    is_crypto = bool(re.search(
+        r'(?:Binance|Kraken|Coinbase|Ledger|Trezor|CoinTracking|Bitcoin|Ethereum|BTC|ETH|'
+        r'Kryptow(?:ä|ae)hrungen|Crypto\s*Assets|Cryptocurrency)', text, re.IGNORECASE
+    ))
+    if not is_crypto:
+        return data
+
+    # 1. Total Crypto Wealth per 31.12
+    m_val = re.search(
+        r'(?:Steuerwert|Gesamtwert|Total\s*Crypto|Portfolio\s*Value|Saldo\s*per\s*31\.12|'
+        r'Total\s*Holdings|Holdings\s*Value)[^\n\r]*?[:\s]\s*([0-9][0-9\'’`\s]{2,10}(?:\.[0-9]{2})?)',
+        text, re.IGNORECASE
+    )
+    if m_val:
+        val = _clean_chf(m_val.group(1))
+        if val is not None:
+            data["crypto_holdings_value_chf"] = val
+
+    # 2. Staking / Mining / Yield Rewards (Taxable as income)
+    m_stk = re.search(
+        r'(?:Staking\s*Rewards|Staking|Mining|Airdrop|Yield\s*Income|Ertrag\s*Krypto|'
+        r'Rewards\s*Total)[^\n\r]*?[:\s]\s*([0-9][0-9\'’`\s]{1,10}(?:\.[0-9]{2})?)',
+        text, re.IGNORECASE
+    )
+    if m_stk:
+        val = _clean_chf(m_stk.group(1))
+        if val is not None:
+            data["crypto_staking_income_chf"] = val
+
+    return data
+
+CARRYOVERS_PATH = os.path.join(ROOT_DIR, "user", "carryovers.json")
+
 # ── Master Scanner ─────────────────────────────────────────────────────────────
 def scan_documents_folder(target_year: int) -> Dict[str, Any]:
     """Scans ./documents/ and auto-fills user tax profile."""
     if not os.path.exists(DOCS_DIR):
         os.makedirs(DOCS_DIR, exist_ok=True)
-        return {
-            "documents_found": 0,
-            "message": "No documents folder found. Created ./documents/."
-        }
-
-    files = [f for f in os.listdir(DOCS_DIR) if not f.startswith(".") and f != "README.md"]
-    if not files:
-        return {
-            "documents_found": 0,
-            "message": "No tax files placed in ./documents/ yet."
-        }
 
     extracted_summary = {
         "gross_income_chf": None,
@@ -303,8 +370,35 @@ def scan_documents_folder(target_year: int) -> Dict[str, Any]:
         "us_withholding_tax_chf": None,
         "depotgebuehren_chf": None,
         "property_maintenance_chf": 0.0,
-        "renovation_items_count": 0
+        "renovation_items_count": 0,
+        "bvg_buyback_potential_chf": None,
+        "crypto_value_chf": None,
+        "crypto_staking_income_chf": None,
+        "energy_carryover_applied_chf": 0.0
     }
+
+    # Check for multi-year energy renovation carryover from previous tax years
+    if os.path.exists(CARRYOVERS_PATH):
+        try:
+            with open(CARRYOVERS_PATH, "r", encoding="utf-8") as cf:
+                cdata = json.load(cf)
+                if cdata.get("energy_carryover_chf") and cdata.get("source_year", target_year) < target_year:
+                    c_amt = float(cdata["energy_carryover_chf"])
+                    extracted_summary["energy_carryover_applied_chf"] = c_amt
+                    extracted_summary["property_maintenance_chf"] += c_amt
+        except Exception:
+            pass
+
+    files = [f for f in os.listdir(DOCS_DIR) if not f.startswith(".") and f != "README.md"]
+    if not files and extracted_summary["energy_carryover_applied_chf"] == 0:
+        return {
+            "status": "SUCCESS",
+            "documents_found": 0,
+            "processed_files": [],
+            "extracted_summary": extracted_summary,
+            "auto_persisted_to_tax_data": False,
+            "message": "No tax files placed in ./documents/ yet."
+        }
 
     processed_files = []
 
@@ -371,8 +465,33 @@ def scan_documents_folder(target_year: int) -> Dict[str, Any]:
                 extracted_summary["property_maintenance_chf"] += amt
                 extracted_summary["renovation_items_count"] += 1
                 file_findings.append(f"Renovation [{cat}]: CHF {amt:,.2f} (100% Tax Deductible)")
+                if cat == "ENERGIEMASSNAHME":
+                    # Record for multi-year carryover tracking
+                    try:
+                        os.makedirs(os.path.dirname(CARRYOVERS_PATH), exist_ok=True)
+                        with open(CARRYOVERS_PATH, "w", encoding="utf-8") as cf:
+                            json.dump({"source_year": target_year, "energy_carryover_chf": amt, "_updated": str(date.today())}, cf, indent=2)
+                    except Exception:
+                        pass
             else:
                 file_findings.append(f"Renovation [{cat}]: CHF {amt:,.2f} (Value-adding: saved for real estate capital gains)")
+
+        # 6. Check Pensionskassenausweis (2nd Pillar Einkaufspotenzial)
+        pk = parse_pensionskassen_ausweis(raw_text)
+        if pk and "bvg_buyback_potential_chf" in pk:
+            extracted_summary["bvg_buyback_potential_chf"] = pk["bvg_buyback_potential_chf"]
+            file_findings.append(f"Pensionskasse Einkaufspotenzial: CHF {pk['bvg_buyback_potential_chf']:,.2f} (⚠️ 3-Jahres-Sperrfrist beachten)")
+
+        # 7. Check Crypto / Web3 Statement
+        crypto = parse_crypto_statement(raw_text)
+        if crypto:
+            if "crypto_holdings_value_chf" in crypto:
+                extracted_summary["crypto_value_chf"] = crypto["crypto_holdings_value_chf"]
+                extracted_summary["securities_value_chf"] = (extracted_summary["securities_value_chf"] or 0.0) + crypto["crypto_holdings_value_chf"]
+                file_findings.append(f"Crypto assets per 31.12: CHF {crypto['crypto_holdings_value_chf']:,.2f} (Steuerfreier Kapitalgewinn)")
+            if "crypto_staking_income_chf" in crypto:
+                extracted_summary["crypto_staking_income_chf"] = crypto["crypto_staking_income_chf"]
+                file_findings.append(f"Crypto Staking / Yield rewards: CHF {crypto['crypto_staking_income_chf']:,.2f} (Als Ertrag steuerbar)")
 
         if file_findings:
             processed_files.append({
@@ -384,6 +503,8 @@ def scan_documents_folder(target_year: int) -> Dict[str, Any]:
     auto_filled_patch = {"income": {}, "deductions": {}, "wealth": {}}
     if extracted_summary["gross_income_chf"]:
         auto_filled_patch["income"]["gross_chf"] = extracted_summary["gross_income_chf"]
+    if extracted_summary["crypto_staking_income_chf"]:
+        auto_filled_patch["income"]["staking_yield_chf"] = extracted_summary["crypto_staking_income_chf"]
     if extracted_summary["pillar3a_chf"]:
         auto_filled_patch["deductions"]["s4_pillar3a_chf"] = extracted_summary["pillar3a_chf"]
     if extracted_summary["canteen_subsidized"]:
@@ -396,6 +517,8 @@ def scan_documents_folder(target_year: int) -> Dict[str, Any]:
         auto_filled_patch["deductions"]["depotgebuehren_chf"] = extracted_summary["depotgebuehren_chf"]
     if extracted_summary["property_maintenance_chf"] > 0:
         auto_filled_patch["deductions"]["s8_property_maintenance_chf"] = extracted_summary["property_maintenance_chf"]
+    if extracted_summary["bvg_buyback_potential_chf"] is not None:
+        auto_filled_patch["deductions"]["pillar_2_buyback_potential_chf"] = extracted_summary["bvg_buyback_potential_chf"]
 
     persisted = False
     if user_profile and any(auto_filled_patch.values()):
@@ -432,6 +555,14 @@ def _generate_greeting_zh(ext: Dict[str, Any], files: List[Dict]) -> str:
         lines.append(f"• **证券托管管理费 (Depotgebühren)**: CHF {ext['depotgebuehren_chf']:,.2f} *(法定100%抵税)*")
     if ext.get("property_maintenance_chf") and ext["property_maintenance_chf"] > 0:
         lines.append(f"• **房产装修维修支出 (共 {ext.get('renovation_items_count', 1)} 笔)**: 确认可扣除 CHF {ext['property_maintenance_chf']:,.2f} *(维持价值/节能100%抵扣)*")
+    if ext.get("energy_carryover_applied_chf") and ext["energy_carryover_applied_chf"] > 0:
+        lines.append(f"• **上年度节能翻新结转额 (Verlustübertrag)**: 已自动从历史档案载入 CHF {ext['energy_carryover_applied_chf']:,.2f} 抵扣本年税金！")
+    if ext.get("bvg_buyback_potential_chf") is not None:
+        lines.append(f"• **二柱养老金回购空间 (BVG Einkauf)**: 最大可回购 CHF {ext['bvg_buyback_potential_chf']:,.2f} *(⚠️ 提醒：享受立减税金同时须遵守3年内禁止资本提取法定限制)*")
+    if ext.get("crypto_value_chf") is not None:
+        lines.append(f"• **加密货币 Web3 市值 (31.12)**: CHF {ext['crypto_value_chf']:,.2f} *(私有资本利得100%免税，仅微额财产税)*")
+    if ext.get("crypto_staking_income_chf") is not None:
+        lines.append(f"• **加密货币质押/挖矿收益 (Staking/Yield)**: CHF {ext['crypto_staking_income_chf']:,.2f} *(依法归入投资所得申报)*")
     lines.append("\n上述数据已自动填入您的本地纳税档案中！接下来我们只需要确认少量补充信息即可完成全套申报。")
     return "\n".join(lines)
 
@@ -446,13 +577,17 @@ def _generate_greeting_en(ext: Dict[str, Any], files: List[Dict]) -> str:
     if ext.get("bank_balance_chf") is not None:
         lines.append(f"• Bank balance as of Dec 31: CHF {ext['bank_balance_chf']:,.2f}")
     if ext.get("securities_value_chf") is not None:
-        lines.append(f"• Securities portfolio as of Dec 31: CHF {ext['securities_value_chf']:,.2f} (Capital gains 100% tax-free)")
+        lines.append(f"• Securities & Crypto portfolio: CHF {ext['securities_value_chf']:,.2f} (Capital gains 100% tax-free)")
     if ext.get("us_withholding_tax_chf") is not None:
         lines.append(f"• US Dividend Withholding Tax (DA-1): CHF {ext['us_withholding_tax_chf']:,.2f} (Auto-allocated for double tax treaty credit)")
     if ext.get("depotgebuehren_chf") is not None:
         lines.append(f"• Custody management fees: CHF {ext['depotgebuehren_chf']:,.2f} (100% tax-deductible)")
     if ext.get("property_maintenance_chf") and ext["property_maintenance_chf"] > 0:
         lines.append(f"• Property maintenance deductions: CHF {ext['property_maintenance_chf']:,.2f} (Werterhaltend/Energiespar)")
+    if ext.get("bvg_buyback_potential_chf") is not None:
+        lines.append(f"• 2nd Pillar Buyback Capacity (BVG Einkauf): CHF {ext['bvg_buyback_potential_chf']:,.2f} (⚠️ Note 3-year withdrawal lock)")
+    if ext.get("crypto_staking_income_chf") is not None:
+        lines.append(f"• Crypto Staking / Yield rewards: CHF {ext['crypto_staking_income_chf']:,.2f} (Taxable as investment yield)")
     lines.append("\nAll extracted values have been saved to your local tax file!")
     return "\n".join(lines)
 
@@ -479,7 +614,9 @@ def main():
             "pillar3a": parse_pillar_3a(txt),
             "bank_statement": parse_bank_statement(txt),
             "broker_statement": parse_broker_statement(txt),
-            "renovation_invoice": parse_renovation_invoice(txt)
+            "renovation_invoice": parse_renovation_invoice(txt),
+            "pensionskasse": parse_pensionskassen_ausweis(txt),
+            "crypto": parse_crypto_statement(txt)
         }
     else:
         parser.print_help()

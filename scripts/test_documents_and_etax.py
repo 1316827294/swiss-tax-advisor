@@ -21,8 +21,10 @@ class TestDocumentsAndEtax(unittest.TestCase):
         self.orig_user_dir = user_profile.USER_DIR
         self.orig_profile_path = user_profile.PROFILE_PATH
         self.orig_reports_dir = user_profile.REPORTS_DIR
+        self.orig_carryovers_path = parse_documents.CARRYOVERS_PATH
 
         parse_documents.DOCS_DIR = os.path.join(self.test_dir, "documents")
+        parse_documents.CARRYOVERS_PATH = os.path.join(self.test_dir, "carryovers.json")
         user_profile.USER_DIR = os.path.join(self.test_dir, "user")
         user_profile.PROFILE_PATH = os.path.join(user_profile.USER_DIR, "profile.json")
         user_profile.REPORTS_DIR = os.path.join(user_profile.USER_DIR, "reports")
@@ -32,6 +34,7 @@ class TestDocumentsAndEtax(unittest.TestCase):
 
     def tearDown(self):
         parse_documents.DOCS_DIR = self.orig_docs_dir
+        parse_documents.CARRYOVERS_PATH = self.orig_carryovers_path
         user_profile.USER_DIR = self.orig_user_dir
         user_profile.PROFILE_PATH = self.orig_profile_path
         user_profile.REPORTS_DIR = self.orig_reports_dir
@@ -135,6 +138,48 @@ class TestDocumentsAndEtax(unittest.TestCase):
         self.assertEqual(scan_res["status"], "SUCCESS")
         summary = scan_res["extracted_summary"]
         self.assertEqual(summary["property_maintenance_chf"], 8500.0)
+
+    def test_pensionskassen_ausweis_parsing(self):
+        sample_pk = """
+        Pensionskassenausweis 2025 / PK Vorsorgestiftung
+        Maximal möglicher Einkauf per 01.01.2025: 45'000.00 CHF
+        Altersguthaben per 31.12: 180'000.00 CHF
+        """
+        fpath = os.path.join(parse_documents.DOCS_DIR, "pk_ausweis_2025.txt")
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write(sample_pk)
+
+        scan_res = parse_documents.scan_documents_folder(2025)
+        self.assertEqual(scan_res["status"], "SUCCESS")
+        summary = scan_res["extracted_summary"]
+        self.assertEqual(summary["bvg_buyback_potential_chf"], 45000.0)
+
+    def test_crypto_statement_parsing(self):
+        sample_crypto = """
+        Binance Tax Report 2025 / CoinTracking
+        Total Crypto Portfolio Value: 35'000.00 CHF
+        Staking Rewards: 1'200.00 CHF
+        """
+        fpath = os.path.join(parse_documents.DOCS_DIR, "crypto_2025.txt")
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write(sample_crypto)
+
+        scan_res = parse_documents.scan_documents_folder(2025)
+        self.assertEqual(scan_res["status"], "SUCCESS")
+        summary = scan_res["extracted_summary"]
+        self.assertEqual(summary["crypto_value_chf"], 35000.0)
+        self.assertEqual(summary["crypto_staking_income_chf"], 1200.0)
+
+    def test_multi_year_energy_carryover(self):
+        # Simulate an energy carryover of CHF 12'500 from 2024
+        with open(parse_documents.CARRYOVERS_PATH, "w", encoding="utf-8") as f:
+            json.dump({"source_year": 2024, "energy_carryover_chf": 12500.0}, f)
+
+        scan_res = parse_documents.scan_documents_folder(2025)
+        self.assertEqual(scan_res["status"], "SUCCESS")
+        summary = scan_res["extracted_summary"]
+        self.assertEqual(summary["energy_carryover_applied_chf"], 12500.0)
+        self.assertGreaterEqual(summary["property_maintenance_chf"], 12500.0)
 
 if __name__ == "__main__":
     unittest.main()

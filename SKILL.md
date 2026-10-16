@@ -90,6 +90,18 @@ Translate plain speech into exact tax deductions automatically:
 * **Church Tax (宗教与教会税)**:
   * 无宗教信仰（Keine / None）：`church_tax_liable: false`，依法完全免缴。
   * 罗马天主教 / 基督教改革宗：按所在州规定征收约 8%~15% 的教会附加税。
+* **Securities & Crypto (股票、ETF 与加密货币 Web3)**:
+  * 资本利得（Capital Gains）：个人私有财产买卖股票、ETF、比特币 100% 免税（DBG Art. 16 Abs. 3）。
+  * 美股股息（US Dividends）：自动通过 **Formular DA-1 / R-US 164** 抵免 15% 美国境外预扣税。
+  * 证券托管费（Depotgebühren）：银行保管账户费用法定 100% 抵税（DBG Art. 32 Abs. 1）。
+  * 质押挖矿（Staking / Mining / Yield）：作为应税投资收益依法申报。
+* **Pensionskasse (二柱养老金回购 BVG Einkauf)**:
+  * 自动从 Vorsorgeausweis 提取 `Einkaufspotenzial`，按边际税率测算立省现金。
+  * 严厉风控提示：**回购后 3 年内禁止资本提取**（如买房、移居境外），否则全额追缴税款并加征滞纳金！
+* **Property Maintenance & Energy (房产维修与节能翻新)**:
+  * 维持价值维修（Werterhaltend）与节能改造（Energiespar）：100% 抵扣个税。
+  * 节能改造超额部分：自动通过 `./user/carryovers.json` 记录，支持跨 2~3 年结转抵扣！
+  * 自住估算租金（Eigenmietwert 2026/2027 废除改革）时间窗口：提醒业主抓紧在改革生效前完成修缮抵税。
 
 ---
 
