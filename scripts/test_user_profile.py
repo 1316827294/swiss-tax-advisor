@@ -51,6 +51,25 @@ class TestUserProfilePipeline(unittest.TestCase):
         prof = user_profile.cmd_get("profile")
         self.assertFalse(prof["religion"]["church_tax_liable"])
 
+    def test_commute_necessity_heuristic(self):
+        # 1. Intra-commune (living in Bern, working in Bern): GA should fold to local pass (800 CHF)
+        user_profile.cmd_set("profile", {
+            "address": {"canton": "BE", "commune": "Bern"},
+            "employment": {"work_commune": "Bern"}
+        }, 2025)
+        user_profile.cmd_set("tax", {"recurring": {"commute_type": "GA"}}, 2025)
+        tax_data = user_profile.cmd_get("tax", 2025)
+        self.assertEqual(tax_data["deductions"]["s1_commute_chf"], 800)
+
+        # 2. Cross-commune (living in Bern, working in Zürich): GA should be recognized as 3995 CHF
+        user_profile.cmd_set("profile", {
+            "address": {"canton": "BE", "commune": "Bern"},
+            "employment": {"work_commune": "Zürich"}
+        }, 2025)
+        user_profile.cmd_set("tax", {"recurring": {"commute_type": "SBB GA"}}, 2025)
+        tax_data = user_profile.cmd_get("tax", 2025)
+        self.assertEqual(tax_data["deductions"]["s1_commute_chf"], 3995)
+
     def test_report_saving(self):
         res = user_profile.cmd_save_report(2025, "steuerdossier", "# Test Report Content")
         self.assertEqual(res["status"], "saved")

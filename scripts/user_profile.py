@@ -72,6 +72,7 @@ def default_profile() -> Dict[str, Any]:
         },
         "employment": {
             "type": "EMPLOYED",      # EMPLOYED / SELF_EMPLOYED / MIXED
+            "work_commune": None,    # City/commune of workplace for commute necessity check
             "has_second_job": False
         },
         "recurring": {
@@ -221,12 +222,12 @@ QUESTION_PIPELINE = [
     {
         "field": "recurring.commute_type",
         "category": "tax_helper",
-        "title_zh": "日常通勤方式",
-        "prompt_zh": "您平时上班主要使用哪种交通方式？（公共交通 / 自驾小汽车 / 自行车或步行）\n若乘公交，大致花费（如 GA、半价卡+通勤月票）是多少？",
-        "prompt_en": "How do you commute to work? (Public transit / Car / Bicycle or Walk)\nIf public transit, what is your annual ticket cost (e.g. GA, Libero)?",
-        "prompt_de": "Wie pendeln Sie zur Arbeit? (ÖV / Auto / Velo-zu-Fuss)?",
-        "options": ["公共交通 (SBB GA/通勤月票)", "自驾小汽车 (严格条件)", "自行车/步行 (定额抵扣)"],
-        "why": "折算 S1 交通职业支出扣除"
+        "title_zh": "日常通勤方式与工作地点",
+        "prompt_zh": "请问您的工作地点在哪个城市/市镇？平时上下班乘坐什么交通工具？\n💡 税法实务重要核算规则：\n税务局严格按照【居住地到工作地】必要且最经济的公交通勤区间票（Streckenabo）核算。\n• 跨城通勤：若点对点年票费用 ≥ SBB GA（3,995 CHF），才可全额按 GA 申报（联邦直接税受 3,200 CHF 法定上限限制）；\n• 同城工作：通常仅认可当地交通网络月票/年票（通常 750~1,000 CHF），超出部分视为私人休闲支出剔除。\n若有具体年票/月票金额亦可直接告知。",
+        "prompt_en": "Where is your workplace located (city/commune), and how do you commute?\n💡 Swiss Tax Rule: Commute deductions are based on necessity between residence and workplace. Full SBB GA (CHF 3,995) is only recognized if your cross-city point-to-point pass reaches or exceeds this cost. Intra-city commute is restricted to local network passes (approx. CHF 750–1,000). Federal tax caps at CHF 3,200.",
+        "prompt_de": "Wo befindet sich Ihr Arbeitsort und wie pendeln Sie?\n💡 Hinweis: Das Generalabonnement (GA) ist nur abzugsfähig, wenn ein Streckenabonnement zwischen Wohn- und Arbeitsort mindestens so viel kosten würde. Innerorts gilt nur das lokale Verbundabonnement.",
+        "options": ["公共交通 (跨城Streckenabo/GA)", "公共交通 (同城市区通勤卡)", "自驾小汽车 (需具备必要条件)", "自行车/步行 (定额 700 CHF)"],
+        "why": "按工作地与居住地最经济必要交通核算 S1，防止同城虚报 GA 导致税务局稽查剔除"
     },
     {
         "field": "recurring.lunch_type",
@@ -453,11 +454,26 @@ def cmd_set(resource: str, patch: Dict, year: Optional[int] = None) -> Dict:
         path = tax_data_path(y)
         data = _load_json(path, lambda: default_tax_data(y))
 
-        # Commute heuristic
+        # Commute heuristic with necessity and intra-city vs cross-city logic
         if "recurring" in patch and "commute_type" in patch["recurring"]:
             ctype = str(patch["recurring"]["commute_type"]).upper()
-            if "GA" in ctype or "GENERAL" in ctype:
-                patch.setdefault("deductions", {})["s1_commute_chf"] = 3995
+            prof = _load_json(PROFILE_PATH, default_profile)
+            res_commune = str(_get_nested(prof, "address.commune") or "").strip().lower()
+            work_commune = str(_get_nested(prof, "employment.work_commune") or "").strip().lower()
+
+            if "deductions" not in patch or "s1_commute_chf" not in patch["deductions"]:
+                if "GA" in ctype or "GENERAL" in ctype:
+                    # Check if intra-commune (same city)
+                    if res_commune and work_commune and res_commune == work_commune:
+                        # Intra-commune: Only local network pass allowed (e.g. Libero/ZVV ~800 CHF)
+                        patch.setdefault("deductions", {})["s1_commute_chf"] = 800
+                    else:
+                        # Cross-commune: Point-to-point Streckenabo reaches GA cost
+                        patch.setdefault("deductions", {})["s1_commute_chf"] = 3995
+                elif any(k in ctype for k in ["BIKE", "VELO", "WALK", "车", "步"]):
+                    patch.setdefault("deductions", {})["s1_commute_chf"] = 700
+                elif any(k in ctype for k in ["LOCAL", "市内", "同城", "NETZ"]):
+                    patch.setdefault("deductions", {})["s1_commute_chf"] = 800
 
         # Lunch heuristic
         if "recurring" in patch and "lunch_type" in patch["recurring"]:

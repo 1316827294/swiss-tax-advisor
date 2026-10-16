@@ -73,10 +73,11 @@ In **every** conversational prompt during data collection, conclude your respons
 
 Users do not know Swiss tax codes (S1, S2, etc.). Translate plain speech into tax deductions:
 
-* **Commute (通勤)**:
-  * User: *"I have an SBB GA (Generalabonnement)"* → Save `{"recurring": {"commute_type": "GA"}}` (script automatically records CHF 3,995).
-  * User: *"I drive 15 km one way"* → Save `{"recurring": {"commute_type": "CAR", "commute_km_one_way": 15}}`.
-  * User: *"I walk / cycle"* → Save `{"recurring": {"commute_type": "BIKE_WALK"}}` (standard CHF 700).
+* **Commute (通勤 — 按居住地与工作地最经济必要交通核算)**:
+  * User: *"I have an SBB GA (跨城通勤，如住在 Bern，工作在 Zürich)"* → Save `{"recurring": {"commute_type": "GA"}}`（点对点年票超过 GA 时，全额按 GA 3,995 CHF 申报，受联邦直接税 3,200 CHF 上限及各州上限限制）。
+  * User: *"I live and work in the same city (同城工作，如住 Bern 在 Bern 上班)"* → 仅按当地交通网络年票（如 Libero 约 800 CHF）申报，防止虚报 GA 触发税务局审计剔除。
+  * User: *"I drive 15 km one way (自驾小汽车)"* → Save `{"recurring": {"commute_type": "CAR", "commute_km_one_way": 15}}`（需具备无可行公共交通或每天节省至少 60 分钟的法定条件）。
+  * User: *"I walk / cycle (自行车或步行)"* → Save `{"recurring": {"commute_type": "BIKE_WALK"}}`（法定定额 700 CHF）。
 * **Lunch (午餐)**:
   * User: *"Our company has a subsidized canteen"* → Save `{"recurring": {"lunch_type": "CANTEEN"}}` (standard CHF 1,600).
   * User: *"I buy lunch at restaurants / bring food"* → Save `{"recurring": {"lunch_type": "RESTAURANT_SELF"}}` (standard CHF 3,200).

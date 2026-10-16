@@ -9,13 +9,15 @@ This document defines the unified deduction taxonomy across Swiss Federal Direct
 ### S1: Commute Expenses (Fahrkosten / Frais de déplacement)
 - **Legal Basis**: DBG Art. 26 Abs. 1 a / StHG Art. 9 Abs. 1.
 - **Rule**:
-  - **Public Transit**: Fully deductible up to cantonal cap (GA, train tickets).
+  - **Principle of Necessity (Notwendigkeitsprinzip)**: Deductions are strictly calculated based on the most economical public transit between the taxpayer's **actual residence (Wohnort)** and **workplace (Arbeitsort)**.
+  - **SBB GA (Generalabonnement)**: Claiming full GA (CHF 3,995) is **only permitted** if the point-to-point route pass (Streckenabonnement) between residence and work meets or exceeds the GA price. If working within the same commune/city, only local zone passes (e.g. Libero/ZVV ~CHF 750–900) are accepted; excess is treated as non-deductible private leisure travel.
   - **Private Car**: 0.70 CHF/km. Permitted only if no viable transit exists or public transit takes >= 60 minutes longer per day.
   - **Bicycle / E-Bike**: Flat rate of **CHF 700 / year**.
 - **Statutory Caps**:
-  - Federal: **CHF 3,300** max.
+  - Federal: **CHF 3,200** max (FABI limit).
   - Canton Bern (BE): **CHF 7,000** max.
   - Canton Zürich (ZH): **CHF 5,000** max.
+  - Canton Genève (GE): **CHF 500** max.
 
 ### S2: Meal Allowance (Auswärtige Verpflegung / Frais de repas)
 - **Legal Basis**: DBG Art. 26 Abs. 1 b / Berufskostenverordnung Art. 11.

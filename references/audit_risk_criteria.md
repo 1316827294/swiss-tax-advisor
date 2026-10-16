@@ -32,3 +32,8 @@ Returns with high risk scores trigger intensive manual audits with formal demand
 - **Trigger**: Claiming luxury additions (e.g. heated swimming pool, luxury sauna installation) under ordinary real estate maintenance.
 - **Audit Action**: Reclassification to non-deductible investment expenditures (wertvermehrend).
 - **Defense Strategy**: Keep detailed contractor invoices separating pure repairs/maintenance (werterhaltend) from energy-saving components.
+
+### Risk Rule 6: Full SBB GA Claimed for Short or Intra-Commune Commute (S1 Fahrkosten)
+- **Trigger**: Taxpayer claims the full SBB GA (CHF 3,995), but residence (Wohnort) and workplace (Arbeitsort) are in the same municipality or neighboring zones where local transit (e.g., Libero, ZVV, Unireso, Passepartout) costs significantly less (CHF 750–1,200).
+- **Audit Action**: Cantonal auditor immediately disallows the excess and cuts the deduction down to the necessary local network pass (e.g. Bern local Libero ~CHF 790), reclassifying the difference as non-deductible private leisure travel (Privatanteil). Additionally, federal tax automatically caps at statutory limit (CHF 3,200).
+- **Defense Strategy**: Check Lohnausweis Box 13G/15. Only claim full GA if point-to-point Streckenabo across cantons/regions exceeds GA cost, or if employer requires multi-site travel without reimbursement.
