@@ -213,13 +213,17 @@ swiss-tax-advisor/
 ├── LICENSE                         # Apache 2.0
 ├── install.sh                      # One-line install script
 │
-├── scripts/                        # Deterministic Python calculation engines
-│   ├── swiss_tax_math.py           # Main tax engine (IFD + cantonal + communal)
+├── scripts/                        # Deterministic Python calculation engines (Zero dependencies)
+│   ├── swiss_tax_math.py           # Core tax engine (IFD + cantonal + communal tariffs)
+│   ├── whatif_simulator.py         # "What-If" sandbox (Marriage penalty, children, relocation, pension payout)
+│   ├── equity_and_crossborder.py   # Tech RSU lockup discounts (ESTV KS 37) & foreign assets (Satzbestimmung)
+│   ├── einsprache_generator.py     # Assessment diff checker & official Einsprache dispute letters (BGE)
+│   ├── generate_deliverables.py    # Master generator for all 5 production-ready tax deliverables
+│   ├── parse_documents.py          # Auto-ingestion (Lohnausweis, 3a, Banks, Brokers, Renovations, BVG, Crypto)
+│   ├── etax_guide_generator.py     # All 26 cantons eTax portal box-by-box filing cheat sheets
 │   ├── marginal_rate_calc.py       # Marginal rate & deduction leverage calculator
-│   ├── family_marriage_sim.py      # Marriage penalty / dual-earner simulator
 │   ├── audit_risk_evaluator.py     # Cantonal audit risk radar (score 0–100)
-│   ├── advanced_advisory.py        # NOV / franchise / relocation advisors
-│   └── test_tax_engine.py          # Test suite
+│   └── user_profile.py             # Local encrypted user profile & onboarding engine
 │
 ├── references/                     # Knowledge base (loaded on demand)
 │   ├── deduction_taxonomy.md       # Full deduction codes S1–S23 / M1–M16

@@ -128,3 +128,39 @@ This executes all underlying calculation engines (`swiss_tax_math.py`, `marginal
    - 展示对应州 eTax 逐框填写核心数据，引导用户 5 分钟照抄网报。
    - 告知用户所有 5 份完整报告已保存在本地 `./user/reports/YYYY/` 目录中。
 
+---
+
+## 🔮 Interactive "What-If" Simulation & Advanced Scenarios
+
+When the user asks scenario planning questions or challenges a tax assessment:
+
+1. **Marriage Penalty / Bonus (结婚税负变动)**:
+   ```bash
+   python3 scripts/whatif_simulator.py marriage --income1 {INC1} --income2 {INC2} --canton {CANTON}
+   ```
+2. **Having Children & Kita (生子与托儿抵税)**:
+   ```bash
+   python3 scripts/whatif_simulator.py child --children {COUNT} --kita {ANNUAL_KITA}
+   ```
+3. **Canton / Commune Relocation (跨州跨市镇搬家时机)**:
+   ```bash
+   python3 scripts/whatif_simulator.py relocation --canton {CANTON} --commune "{COMMUNE}"
+   ```
+4. **Pension Capital Withdrawal Staggering (养老金分拆提取避税)**:
+   ```bash
+   python3 scripts/whatif_simulator.py capital-withdrawal --amount {AMT} --canton {CANTON} --years {YEARS}
+   ```
+5. **Tech Employee RSU / ESPP Lockup Discount (大厂受限股票折扣 ESTV KS 37)**:
+   ```bash
+   python3 scripts/equity_and_crossborder.py rsu --market-value {VAL} --lockup-years {YEARS} --canton {CANTON}
+   ```
+6. **Overseas Real Estate Progression (海外房产合规 Satzbestimmung)**:
+   ```bash
+   python3 scripts/equity_and_crossborder.py foreign-property --swiss-income {INC} --foreign-rental-income {RENT} --canton {CANTON}
+   ```
+7. **Disputed Assessment & Einsprache Objection Letter (税局剔除官方申诉函)**:
+   ```bash
+   python3 scripts/einsprache_generator.py draft-letter {YEAR} --disputed-items '["commute", "homeoffice", "training", "renovation"]'
+   ```
+   引用瑞士联邦最高法院 BGE 经典判例，自动生成正式挂号信申诉公函（德/法）。
+
