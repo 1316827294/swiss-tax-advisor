@@ -12,6 +12,7 @@ import json
 import parse_documents
 import etax_guide_generator
 import user_profile
+import generate_deliverables
 
 class TestDocumentsAndEtax(unittest.TestCase):
     def setUp(self):
@@ -69,5 +70,36 @@ class TestDocumentsAndEtax(unittest.TestCase):
         self.assertIn("Code 410", guide_res["guide_markdown"])
         self.assertTrue(os.path.exists(guide_res["guide_path"]))
 
+    def test_deliverables_generation_all_5(self):
+        user_profile.cmd_set("profile", {
+            "personal": {"name": "Test User", "permit_type": "B"},
+            "address": {"canton": "BE", "commune": "Bern"},
+            "civil_status": {"status": "SINGLE", "children_count": 0},
+            "religion": {"church_tax_liable": False}
+        }, 2025)
+        user_profile.cmd_set("tax", {
+            "income": {"gross_chf": 120000.0},
+            "deductions": {"s1_commute_chf": 3995.0, "s2_meals_chf": 3200.0, "s4_pillar3a_chf": 7258.0},
+            "wealth": {"bank_balance_31dec_chf": 50000.0}
+        }, 2025)
+
+        res = generate_deliverables.generate_all_deliverables(2025)
+        self.assertEqual(res["status"], "ALL_DELIVERABLES_GENERATED")
+        self.assertEqual(len(res["deliverables"]), 5)
+
+        for d_name, d_info in res["deliverables"].items():
+            self.assertEqual(d_info["status"], "SUCCESS")
+            path = d_info["path"]
+            self.assertIsNotNone(path, f"Path was None for {d_name}")
+            self.assertTrue(os.path.exists(path), f"File {path} does not exist for {d_name}")
+            with open(path, "r", encoding="utf-8") as f:
+                content = f.read()
+                self.assertGreater(len(content), 100)
+                # Ensure no unfilled curly brace templates
+                import re
+                placeholders = re.findall(r'\{[a-zA-Z0-9_]+\}', content)
+                self.assertEqual(placeholders, [], f"Unfilled placeholders found in {d_name}: {placeholders}")
+
 if __name__ == "__main__":
     unittest.main()
+

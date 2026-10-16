@@ -97,34 +97,22 @@ Translate plain speech into exact tax deductions automatically:
 
 When `next-question` reports `status == "READY_TO_CALCULATE"`:
 
-1. **Silently run calculation scripts**:
+1. **Silently generate all 5 official tax deliverables**:
 ```bash
-# Main tax engine
-python3 scripts/swiss_tax_math.py \
-  --gross-income {GROSS} --canton {CANTON} --commune "{COMMUNE}" \
-  --civil-status {CIVIL_STATUS} --children {CHILDREN} \
-  --deductions '{"s1": {S1}, "s2": {S2}, "s4": {S4}}' --json
-
-# Marginal rate
-python3 scripts/marginal_rate_calc.py \
-  --income {GROSS} --canton {CANTON} --status {CIVIL_STATUS} \
-  --deduction {S4} --category PILLAR_3A --json
-
-# Cantonal audit risk radar
-python3 scripts/audit_risk_evaluator.py \
-  --income {NET} --education {S7} --commute {S1} --json
-
-# Generate Canton-specific eTax step-by-step guide
-python3 scripts/etax_guide_generator.py generate 2025
+python3 scripts/generate_deliverables.py all 2025
 ```
+This executes all underlying calculation engines (`swiss_tax_math.py`, `marginal_rate_calc.py`, `audit_risk_evaluator.py`, `etax_guide_generator.py`) and writes 5 zero-placeholder, 100% production-ready deliverables to `./user/reports/YYYY/`:
 
-2. **Present Deliverable 1: 🇨🇭 Steuerdossier 申报底稿**:
-   - 展示包含联邦直接税、州税、市镇税、教会税在内的完整 CHF 清单表。
-   - 展示边际税率与 3a 填满立省金额。
-   - 展示税务局初审风控安全得分（0–100）。
+| 交付文件 / Deliverable | 格式 | 核心用途与内容 |
+|---|---|---|
+| **1. `steuerdossier_{year}.md`** | Markdown | 官方申报底稿：含联邦直接税 (IFD)、州税、市镇税、教会税四级拆解及法定抵扣清单 |
+| **2. `etax_guide_{canton}_{year}.md`** | Markdown | 所在州官方门户（TaxMe / eTax.zh / VaudTax / GeTax 等 26 州）逐框网报抄表指南 |
+| **3. `fristerstreckung_{year}.txt`** | 纯文本 | 官方延期申报申请公函（根据所在州自动生成德/法/意官方正式行政信函格式） |
+| **4. `tax_saving_report_{year}.md`** | Markdown | 深度节税决策报告：包含边际税率、3a 避税倍数杠杆、医保 Franchise (300 vs 2500) 优选及 Bunching 策略 |
+| **5. `audit_risk_report_{year}.md`** | Markdown | 税局初审风控雷达：模拟州税局计算机筛查模型，量化风险分级 (Low/Medium/High) 与必备佐证材料清单 |
 
-3. **Present Deliverable 2: 📋 官方 eTax 逐框照抄指南**:
-   - 直接向用户呈现对应州官方网站（如伯尔尼 TaxMe、苏黎世 eTax.zh、沃州 VaudTax）的逐框流水单，告诉用户第几页第几栏分别填什么数字，5 分钟完成网报。
+2. **Present outputs warmly to the user**:
+   - 展示包含联邦、州、市镇三级税负的总额与有效税率。
+   - 展示对应州 eTax 逐框填写核心数据，引导用户 5 分钟照抄网报。
+   - 告知用户所有 5 份完整报告已保存在本地 `./user/reports/YYYY/` 目录中。
 
-4. **Auto-save reports locally**:
-Reports are persisted to `./user/reports/YYYY/`.
