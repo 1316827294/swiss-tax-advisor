@@ -1,87 +1,119 @@
 # 🇨🇭 瑞士智能报税与节税助手 (`swiss-tax-advisor`)
 
+[![CI](https://github.com/1316827294/swiss-tax-advisor/actions/workflows/ci.yml/badge.svg)](https://github.com/1316827294/swiss-tax-advisor/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
+[![Multi-Platform](https://img.shields.io/badge/platforms-Claude%20%7C%20Cursor%20%7C%20Copilot%20%7C%20Windsurf%20%7C%20Cline%20%7C%20AGY-success.svg)](#-支持的-ai-平台矩阵)
+
 [English](README.md) | [Deutsch](README.de.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Español](README.es.md) | [简体中文](README.zh.md)
 
 ---
 
-> **面向 LLM Agent 的瑞士报税底稿生成、税务局风控自检与主动节税开源 Skill。**  
-> 兼容 **Claude Code**, **OpenAI Codex**, **Gemini CLI**, **Google Antigravity**, **Cursor** 以及 **OpenClaw**。
+专为 **AI Agent（Claude Code、Cursor、GitHub Copilot、Cline、Windsurf、Aider、Devin、Google Antigravity）** 打造的瑞士个人与家庭所得税申报底稿生成、税务局初审风控自检、以及主动节税规划的**开源、主权安全、确定性高精度技能库**。
+
+> **数据完全本地化主权**：所有税额计算和用户档案均在本地通过确定性 Python 脚本执行，任何个人税务数据绝不会上传至外部云端报税平台。
 
 ---
 
-## 🌟 核心亮点与特性
+## ⚡ 30 秒快速上手 (Quick Start)
 
-1. **零外部重依赖**：完全基于 Python 3.10+ 标准库（`math`, `argparse`, `json`, `sys`, `unittest`），免 `pip install`，任何系统克隆即跑。
-2. **确定性高精度（严禁 LLM 口算心算）**：硬性门禁杜绝大模型在瑞士累进阶梯税率表（Progressionstarif）上的幻觉，统一采用**生丁（Rappen，1 CHF = 100 Rappen）与瑞士法定 5-Rappen 舍入**。
-3. **税务局官方稽查风控雷达（0~100 分）**：深度模拟瑞士各州税务局初审筛选算法（*Risikobasierte Fallauswahl*），在提交申报前提前排查 S7 进修超标（>15%）、无票据抵扣、私家车与公交冲突等高危红线。
-4. **六语原生自适应**：提供中文、英语、德语、法语、意大利语、西班牙语全量文档，LLM 会根据你的提问语言自动生成对应语言的申报底稿与专业报告。
-5. **完整覆盖 2025/2026 瑞士全税目扣除体系**：
-   - S1 通勤（公共交通实报实销、私家车 0.70/km 严格条件、自行车 700 CHF）；
-   - S2 餐饮定额（外食 3,200 CHF / 食堂餐补 1,600 CHF）；
-   - S3 医疗自负（5% 净收入起扣线与跨年压茬 Bunching 策略）；
-   - S4 第三支柱养老金（2025/2026 雇员上限 7,258 CHF / 自雇 20% 最高 36,288 CHF，多账户分批提取策略）；
-   - S6 托儿所 Kita（联邦与伯尔尼最高 25,500 CHF / 孩子）；
-   - S7 职业进修（最高 12,700 CHF，附雇主证明信策略）；
-   - S8 房产维护（实际费用 vs Pauschal 定额、光伏与节能改造 2 年结转新规、公寓更新基金 Erneuerungsfonds）；
-   - S9 独立工作间（BGE 140 II 157 严苛双条件折算）；
-   - 抚养费（Alimente）：前配偶/未成年子女 100% 扣除，成年子女严格不可抵扣；
-   - 双职工特别扣除（Zweitverdienerabzug）：较低收入 50%（最高 14,100 CHF）。
-6. **三大高阶决策辅助引擎**：
-   - **源泉税转正申报决策器 (Quellensteuer NOV)**：测算 B 证居民转正申报是退税还是倒补税（转正终身不可撤销，防坑必备）；
-   - **基础医保免赔额精算器 (Franchise 300 vs 2500)**：每年 10~11 月基于医疗年支出拐点（~1,800-2,000 CHF）精算最省钱方案；
-   - **跨州/跨市镇税负对比沙盘 (Relocation What-If)**：输入不同州或市镇（如 Bern vs Zug），精算税率乘数（Steuerfuss）带来的现金差异。
+只需 3 步即可在任意支持的 AI 环境中开启瑞士报税：
 
----
-
-## ⚡ 快速开始与测试
-
-运行离线单元测试套件：
+### 1. 克隆并安装
 ```bash
-python3 skills/swiss-tax-advisor/scripts/test_tax_engine.py
-```
-*(预期结果：`Ran 12 tests in 0.001s, OK`)*
+git clone https://github.com/1316827294/swiss-tax-advisor.git
+cd swiss-tax-advisor
 
-### 命令行常用指令
-
-```bash
-# 1. 精确计算瑞士税额（伯尔尼，已婚，毛收入 17 万，含 3a 与托儿费抵扣）
-python3 skills/swiss-tax-advisor/scripts/swiss_tax_math.py \
-  --gross-income 170000 --canton BE --civil-status MARRIED --children 1 \
-  --deductions '{"s1": 3300, "s4": 7258, "s6": 18000}' --json
-
-# 2. 测算当前收入区间的真实边际税率与 3a 填满能省多少现金
-python3 skills/swiss-tax-advisor/scripts/marginal_rate_calc.py \
-  --income 120000 --canton ZH --deduction 7258 --category PILLAR_3A --json
-
-# 3. 模拟双职工家庭结婚税收惩罚 (Marriage Penalty)
-python3 skills/swiss-tax-advisor/scripts/family_marriage_sim.py \
-  --earner-a 110000 --earner-b 75000 --canton BE --children 1 --json
-
-# 4. 运行税务局官方初审风控雷达自检
-python3 skills/swiss-tax-advisor/scripts/audit_risk_evaluator.py \
-  --income 85000 --education 15000 --missing-proofs --json
-
-# 5. 评估源泉税 (Quellensteuer) 是否应该申请 NOV 转正申报
-python3 skills/swiss-tax-advisor/scripts/advanced_advisory.py nov \
-  --income 110000 --canton ZH --deductions '{"s4": 7258, "s1": 3300}'
-
-# 6. 测算基础医保 Franchise 选 300 还是 2500 更省钱
-python3 skills/swiss-tax-advisor/scripts/advanced_advisory.py franchise \
-  --spend 1400 --premium-300 450 --premium-2500 310
-
-# 7. 模拟跨州搬家税负差异（如从伯尔尼搬到楚格）
-python3 skills/swiss-tax-advisor/scripts/advanced_advisory.py relocation \
-  --income 150000 --from-canton BE --to-canton ZG
+# 自动安装到你的 AI 环境（例如 Claude Code、Cursor、或全部平台）
+./install.sh --platform claude    # 或 cursor / cline / copilot / all
 ```
 
+### 2. 启动对话
+在终端或 AI 对话框中，直接说：
+> *"你好，帮我做 2025 年的瑞士报税"* 或 *"Hello, help me file my Swiss taxes for 2025"*
+
+### 3. AI 主动引导与自动归档
+AI 会自动检测你的税务档案并主动向你提问引导（所住州与市镇、婚姻状况、子女、收入、3a 扣除等），并在后台静默计算，输出包含州税、市镇税、联邦直接税与节税建议的完整报税底稿（Steuerdossier）。数据自动保存在本地 `./user/` 目录，下次对话无需重复输入。
+
 ---
 
-## 🔒 隐私合规与数据主权 (Swiss FADP / DSG)
+## 🌟 核心特性
 
-所有金融运算均在本地机器执行，绝不向未授权第三方上传明细。内置瑞士数据保护法脱敏规则，自动星号脱敏瑞士社保号（AHV 756.xxxx.xxxx.xx）与银行账号（IBAN CHxx...）。
+| 功能模块 | 详细说明 |
+|---|---|
+| 🧮 **确定性计算引擎** | 严禁 AI 口算心算，覆盖全瑞士 26 州的联邦直接税 (IFD/DBG)、州税、市镇税 (Steuerfuss) 及财富税，法定 5 生丁 (5-Rappen) 舍入 |
+| 👤 **本地档案持久化** | 自动管理 `./user/profile.json` 与 `./user/tax_YYYY.json`，跨会话记忆，隐私 100% 留存本地 |
+| 📄 **凭证与扣除识别** | 自动识别工资单 (Lohnausweis 1-15 栏)、银行流水、3a 凭证、保险单，对应扣除代码 S1–S23 |
+| 🛡️ **税务局风控雷达** | 模拟州税务局初审筛选算法 (*Risikobasierte Fallauswahl*)，提前预警高危扣除（0~100 风险分） |
+| 💡 **主动节税建议** | 测算第三支柱养老金 (3a) 缺口、双职工家庭特别扣除、医保免赔额 (Franchise 300 vs 2500) 临界点 |
+| ⚖️ **源泉税转正决策 (NOV)** | 测算 B 证居民是否应该申请普通评定（NOV）退税，防止倒补税陷阱 |
+| 📑 **官方合规交付物** | 自动输出 Steuerdossier 申报底稿、各州 eTax 填报指南、Fristerstreckung 延期申请信 |
+| 🌐 **多语言支持** | 提问自动识别中/英/德/法/意/西；官方公函自动使用所在州官方语言（德/法/意） |
+| 🔒 **隐私脱敏合规** | 符合瑞士联邦数据保护法 (DSG/FADP)，自动星号脱敏 AHV 与 IBAN 账号 |
+
+---
+
+## 🤖 支持的 AI 平台矩阵
+
+| 平台 | 自动化水平 | 执行机制 | 安装命令 |
+|---|---|---|---|
+| **Claude Code** | 🟢 完全自动 | 自动后台运行脚本，无需人工干预 | `./install.sh --platform claude` |
+| **Google Antigravity** | 🟢 完全自动 | 运行时感知 `SKILL.md`，自动调用脚本 | 原生支持 / `./install.sh --platform agy` |
+| **Cursor** | 🟡 交互确认 | 根据 `.cursor/rules` 提示在 Composer 中运行 | `./install.sh --platform cursor` |
+| **Cline / Roo Code** | 🟢 完全自动 | 通过 MCP/终端执行器自动执行 | `./install.sh --platform cline` |
+| **Windsurf** | 🟡 交互确认 | Cascade 规则驱动 | `./install.sh --platform windsurf` |
+| **GitHub Copilot** | 🟡 交互确认 | 基于 Copilot Instructions 引导 | `./install.sh --platform copilot` |
+| **Aider / Devin** | 🟢 完全自动 | 按照指令规范自动调用测试与脚本 | `./install.sh --platform aider` |
+
+---
+
+## 💬 实际使用效果展示
+
+```
+用户: 你好，帮我做 2025 年的瑞士报税。
+
+AI: 您好！我是您的瑞士税务助手。在开始前，我需要了解您的基本情况：
+    请问您目前住在哪个州（Canton）和哪个市镇？
+
+用户: 伯尔尼州，Bern 市。
+
+AI: 好的，已为您记录（伯尔尼州 Bern 市）。
+    请问您的婚姻状况是？（单身 / 已婚 / 注册伴侣）
+
+用户: 单身，没有孩子，持有 B 证，年薪 95,000 CHF。
+
+AI: 明白！正在为您生成 2025 年度报税测算底稿...
+    （AI 在后台静默运行脚本，计算联邦直接税、伯尔尼州税、市镇税及 3a 节税潜力）
+
+    📊 2025 伯尔尼预估税额一览：
+    ────────────────────────────────────────
+    • 联邦直接税 (Bund):         CHF  1,420.00
+    • 伯尔尼州税 (Kanton):        CHF  6,850.00
+    • 市镇税 (Gemeinde Bern):    CHF  6,920.00
+    • 预估税额合计:               CHF 15,190.00
+    ────────────────────────────────────────
+    💡 节税提醒：
+    您尚未填报第三支柱 (Pillar 3a)。2025 年最高限额为 CHF 7,258。
+    若全额缴纳，按您约 28.5% 的边际税率，可直接为您节省约 CHF 2,068 的税款！
+```
+
+---
+
+## 🔒 隐私与本地数据安全承诺
+
+1. **绝对离线优先**：所有税率表与算法均硬编码或离线引用在 `scripts/` 与 `references/` 中，计算时无需网络请求。
+2. **严格的 Git 忽略规则**：根目录与 `user/` 均配备严格的 `.gitignore`，您的 `profile.json`、历史税单数据、以及任何生成的 `reports/` 绝对不会被意外 commit 或 push 到公共仓库。
+3. **开源透明**：完全基于 Python 标准库，代码行行可审计。
+
+---
+
+## 🤝 参与贡献
+
+欢迎瑞士税务专家、软件工程师与跨国通勤者参与完善！
+请参阅 [CONTRIBUTING.md](CONTRIBUTING.md) 了解如何新增各州税率表（Canton Tariffs）与市镇乘数（Steuerfuss）。
 
 ---
 
 ## 📄 开源许可证
 
-遵循 **MIT 开源许可证**，详见 `LICENSE`。
+本项目基于 [Apache License 2.0](LICENSE) 开源。

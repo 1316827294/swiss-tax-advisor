@@ -1,0 +1,27 @@
+name: 🏛️ Tax Tariff / Multiplier Update
+description: Propose an updated tax tariff, deductible ceiling, or communal Steuerfuss for a new tax year
+labels: ["tax-rates", "canton-update"]
+body:
+  - type: input
+    id: canton_year
+    attributes:
+      label: Canton & Tax Year
+      description: e.g. Canton BE, Tax Year 2026
+      placeholder: e.g. Canton BE, 2026
+    validations:
+      required: true
+  - type: textarea
+    id: changes_summary
+    attributes:
+      label: Summary of Tax Changes
+      description: What changed? (e.g., Pillar 3a max deduction, child allowance, cantonal Steuerfuss)
+    validations:
+      required: true
+  - type: input
+    id: official_source
+    attributes:
+      label: Official Source Link / Decree
+      description: Link to official cantonal tax administration announcement (Kantonale Steuerverwaltung) or Federal Tax Admin (ESTV)
+      placeholder: https://www.estv.admin.ch/...
+    validations:
+      required: true

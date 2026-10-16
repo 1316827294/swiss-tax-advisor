@@ -1,12 +1,13 @@
-# 🇨🇭 Swiss Tax Advisor — Antigravity Agent Skill
+# 🇨🇭 Swiss Tax Advisor — Open-Source AI Tax Skill
 
+[![CI](https://github.com/1316827294/swiss-tax-advisor/actions/workflows/ci.yml/badge.svg)](https://github.com/1316827294/swiss-tax-advisor/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Skill Format](https://img.shields.io/badge/format-Antigravity%20Skill-green.svg)](https://antigravity.dev/docs/skills)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/)
+[![Multi-Platform](https://img.shields.io/badge/platforms-Claude%20%7C%20Cursor%20%7C%20Copilot%20%7C%20Windsurf%20%7C%20Cline%20%7C%20AGY-success.svg)](#-platform-compatibility-matrix)
 
-An **open-source, sovereign, and deterministic Agent Skill** for Swiss personal and family income tax filing, cantonal audit-risk pre-checking, and proactive tax-saving advisory — usable with [Antigravity (AGY)](https://antigravity.dev).
+An **open-source, sovereign, and deterministic AI Agent Skill** for Swiss personal and family income tax filing, cantonal audit-risk pre-checking, and proactive tax-saving advisory. Compatible with **Claude Code, Cursor, GitHub Copilot, Cline, Windsurf, Aider, Devin, and Google Antigravity**.
 
-> **Sovereign by design**: All tax calculations run locally via deterministic Python scripts. No financial data is ever sent to a third-party endpoint.
+> **Sovereign by design**: All tax calculations and user profiles run locally via deterministic Python scripts. No financial data is ever sent to external cloud tax services.
 
 ---
 
